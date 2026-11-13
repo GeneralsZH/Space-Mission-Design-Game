@@ -2,7 +2,13 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
+// In production (GitHub Pages), VITE_BASE is injected by the CI workflow as
+// "/Space-Mission-Design-Game/". Locally it stays "/" so `npm run dev` works
+// without any change.
+const base = process.env.VITE_BASE ?? "/";
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     tailwindcss(),
@@ -10,10 +16,10 @@ export default defineConfig({
       name: "mission-offline-cache",
       generateBundle(_options, bundle) {
         const assets = [
-          "/",
-          "/index.html",
-          "/favicon.svg",
-          ...Object.keys(bundle).map((file) => `/${file}`),
+          base,
+          `${base}index.html`,
+          `${base}favicon.svg`,
+          ...Object.keys(bundle).map((file) => `${base}${file}`),
         ];
         const version = assets
           .join("")
