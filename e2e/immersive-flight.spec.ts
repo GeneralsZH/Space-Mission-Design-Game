@@ -83,7 +83,7 @@ for (const width of [1366, 390])
       );
     }
     await page.screenshot({
-      path: `docs/screenshots/fullscreen-flight-${width}.png`,
+      path: `test-results/screenshots/fullscreen-flight-${width}.png`,
     });
     await flight.getByRole("button", { name: /Safe mode/ }).click();
     await expect(
@@ -302,7 +302,9 @@ test("Russian science controls fit the phone viewport", async ({ page }) => {
     .getByRole("button", { name: "Выполнить научный виток", exact: true })
     .click();
   await expect(flight.getByText(/Виток 1 \/ 4/)).toBeVisible();
-  await page.screenshot({ path: "docs/screenshots/fullscreen-flight-ru.png" });
+  await page.screenshot({
+    path: "test-results/screenshots/fullscreen-flight-ru.png",
+  });
 });
 
 test("failure playback finishes before the error list opens inside fullscreen", async ({

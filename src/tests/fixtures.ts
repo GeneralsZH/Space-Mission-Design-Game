@@ -8,7 +8,7 @@ export function loadLegacyFixture() {
     JSON.stringify({
       schemaVersion: 1,
       build: goldenBuild,
-      settings: defaultSettings,
+      settings: { ...defaultSettings, language: "ru" },
       seed: 42,
       commands: [],
     }),

@@ -126,7 +126,7 @@ test("NASA samples, configuration comparison, complete flight, report download a
     expect((await response.body()).length).toBeGreaterThan(100);
   }
   await page.screenshot({
-    path: "docs/screenshots/lroc-science.png",
+    path: "test-results/screenshots/lroc-science.png",
     fullPage: true,
   });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -209,7 +209,7 @@ test("computed 3D lunar orbit loads NASA texture, moves, pauses and changes came
     timeout: 20000,
   });
   await page.screenshot({
-    path: "docs/screenshots/lunar-two-body-3d.png",
+    path: "test-results/screenshots/lunar-two-body-3d.png",
     fullPage: true,
   });
   expect(errors).toEqual([]);

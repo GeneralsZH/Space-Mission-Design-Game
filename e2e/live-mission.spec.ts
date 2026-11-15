@@ -58,7 +58,7 @@ test("the launcher leaves the pad and releases the visible spacecraft above Eart
   ).toBeVisible();
   await page
     .getByRole("region", { name: "3D-запуск ракеты" })
-    .screenshot({ path: "docs/screenshots/live-separation.png" });
+    .screenshot({ path: "test-results/screenshots/live-separation.png" });
   const position = await canvas.getAttribute("data-spacecraft-position");
   expect(Number(position?.split(",")[1])).toBeGreaterThan(6);
 });
@@ -127,7 +127,7 @@ test("the whole mission plays live: ascent, separation, lunar transfer, science 
   await expect(canvas).toHaveAttribute("data-camera-settled", "true");
   await page
     .getByRole("region", { name: "3D-полёт миссии" })
-    .screenshot({ path: "docs/screenshots/live-route.png" });
+    .screenshot({ path: "test-results/screenshots/live-route.png" });
   await expect(view).toHaveAttribute("data-phase", "cruise");
   await page.getByRole("button", { name: /Safe mode/ }).click();
   await expect(view).toHaveAttribute("data-phase", "orbitInsertion", {
@@ -149,7 +149,7 @@ test("the whole mission plays live: ascent, separation, lunar transfer, science 
     .not.toBe(1);
   await page
     .getByRole("region", { name: "3D-полёт миссии" })
-    .screenshot({ path: "docs/screenshots/live-science.png" });
+    .screenshot({ path: "test-results/screenshots/live-science.png" });
   await expect(
     page.getByRole("heading", { name: "Продлённое затмение" }),
   ).toBeVisible({ timeout: 20000 });
@@ -164,7 +164,7 @@ test("the whole mission plays live: ascent, separation, lunar transfer, science 
   await expect(canvas).toHaveAttribute("data-downlink", "true");
   await page
     .getByRole("region", { name: "3D-полёт миссии" })
-    .screenshot({ path: "docs/screenshots/live-downlink.png" });
+    .screenshot({ path: "test-results/screenshots/live-downlink.png" });
   await expect(view).toHaveAttribute("data-phase", "completed", {
     timeout: 20000,
   });

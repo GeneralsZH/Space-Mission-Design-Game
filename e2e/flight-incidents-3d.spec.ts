@@ -81,7 +81,7 @@ test("bad payload lifts off, breaks up in 3D and only then releases the error li
   ).toHaveCount(0);
   await page
     .locator(".flight-stage")
-    .screenshot({ path: "docs/screenshots/rocket-breakup-3d.png" });
+    .screenshot({ path: "test-results/screenshots/rocket-breakup-3d.png" });
   const progress = await canvas.getAttribute("data-flight-progress");
   await page.waitForTimeout(250);
   expect(await canvas.getAttribute("data-flight-progress")).toBe(progress);
@@ -95,7 +95,7 @@ test("bad payload lifts off, breaks up in 3D and only then releases the error li
   await expect(page.locator(".diagnosis-facts")).toContainText("327.0 kg");
   await expect(page.locator(".diagnosis-facts")).toContainText("250.0 kg");
   await page.screenshot({
-    path: "docs/screenshots/rocket-breakup-analysis.png",
+    path: "test-results/screenshots/rocket-breakup-analysis.png",
     fullPage: true,
   });
   await page.reload();
@@ -131,7 +131,9 @@ test("insufficient fuel produces a visibly drifting spacecraft rather than an ex
   await page.getByRole("button", { name: "Пауза", exact: true }).click();
   await page
     .locator(".flight-stage")
-    .screenshot({ path: "docs/screenshots/spacecraft-off-course-3d.png" });
+    .screenshot({
+      path: "test-results/screenshots/spacecraft-off-course-3d.png",
+    });
   await expect(
     page.getByRole("heading", { name: "Разбор происшествия и список ошибок" }),
   ).toHaveCount(0);
@@ -184,5 +186,5 @@ test("a desktop replay remounts the 3D renderer and resets the clock even during
   await page.getByRole("button", { name: "Пауза", exact: true }).click();
   await page
     .locator(".flight-stage")
-    .screenshot({ path: "docs/screenshots/replay-3d-desktop.png" });
+    .screenshot({ path: "test-results/screenshots/replay-3d-desktop.png" });
 });

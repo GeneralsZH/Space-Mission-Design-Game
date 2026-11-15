@@ -161,7 +161,7 @@ test("accepted science leaves a persistent visible 3D survey band", async ({
     timeout: 20000,
   });
   await page.screenshot({
-    path: "docs/screenshots/custom-orbit-trail.png",
+    path: "test-results/screenshots/custom-orbit-trail.png",
     fullPage: true,
   });
   await page.reload();
@@ -194,7 +194,7 @@ test("solar damage changes the spacecraft and leads to an explained power-loss p
   });
   await expect(page.locator(".flight-damage-status")).toContainText("45%");
   await page.screenshot({
-    path: "docs/screenshots/solar-cell-damage.png",
+    path: "test-results/screenshots/solar-cell-damage.png",
     fullPage: true,
   });
   await page
@@ -256,7 +256,7 @@ test("mobile fullscreen keeps survey, events and spacecraft actions usable", asy
     flight.getByRole("region", { name: "Actions", exact: true }),
   ).toBeVisible();
   await page.screenshot({
-    path: "docs/screenshots/advanced-flight-mobile.png",
+    path: "test-results/screenshots/advanced-flight-mobile.png",
   });
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),

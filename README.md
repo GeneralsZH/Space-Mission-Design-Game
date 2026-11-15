@@ -30,3 +30,31 @@ To create a visual, interactive environment that allows users to learn the funda
 6. 🏆 **Mission Evaluation** — Calculating the final mission score based on the volume of scientific data gathered, reliability, and budget efficiency.
 
 > **Note:** All physical and economic parameters in the simulator are educational approximations and are not intended for calculating real-world space missions.
+
+## Run locally
+
+Requires Node.js 24 or later. From the repository root:
+
+```sh
+npm ci
+npm run dev
+```
+
+English is the default interface language. The EN/RU switch preserves an explicit saved choice. Build with `npm run build`; run checks with `npm run check`.
+
+## Submission materials
+
+- [Project summary - Word, 161 words](docs/Orbital_Mission_Lab_Project_Summary.docx)
+- [Project details - Word](docs/Orbital_Mission_Lab_Project_Details.docx)
+- [NASA and other resources - Word](docs/Orbital_Mission_Lab_NASA_and_Other_Resources.docx)
+- [NASA, partner, software and tool resources - full URLs](docs/submission-resources.md)
+- [Scientific assumptions and limitations](docs/assumptions.md)
+- [Verification record](docs/verification.md)
+
+The observed scientific dataset is historical LRO/LROC illumination. It is distinct from simulated science return and does not contain measured ice abundance.
+
+## Generated files
+
+QA screenshots are generated in ignored `test-results/screenshots`, alongside browser reports. Historical screenshot binaries, the completed work plan and the superseded manual browser-QA script have been removed from the tracked source tree. NASA science data and their credits remain bundled.
+
+The existing GitHub Pages workflow builds with `VITE_BASE=/Space-Mission-Design-Game/`; public images, source links and the service worker respect that prefix. The working branch is `ehso`.

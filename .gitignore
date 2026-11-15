@@ -33,3 +33,9 @@ desktop.ini
 
 # OpenAI / deployment secrets
 .openai/
+
+docs/screenshots/
+
+.vite/
+
+*.tsbuildinfo

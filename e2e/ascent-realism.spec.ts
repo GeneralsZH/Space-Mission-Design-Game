@@ -87,7 +87,7 @@ test("physical-scale launch shows atmosphere, turn, orbital coast, TLI and array
   const c = await start(page);
   await expect(c).toHaveAttribute("data-earth-radius-km", "6371");
   await expect(c).toHaveAttribute("data-rocket-height-m", "70");
-  await page.screenshot({ path: "docs/screenshots/surface-pad.png" });
+  await page.screenshot({ path: "test-results/screenshots/surface-pad.png" });
   await page
     .getByRole("combobox", { name: "Playback speed", exact: true })
     .selectOption("4");
@@ -102,7 +102,9 @@ test("physical-scale launch shows atmosphere, turn, orbital coast, TLI and array
   await expect
     .poll(() => c.getAttribute("data-local-spacecraft-position"))
     .toBe(frozen);
-  await page.screenshot({ path: "docs/screenshots/ascent-gravity-turn.png" });
+  await page.screenshot({
+    path: "test-results/screenshots/ascent-gravity-turn.png",
+  });
   await page
     .getByRole("button", { name: "In-flight solar panorama", exact: true })
     .click();
@@ -115,10 +117,12 @@ test("physical-scale launch shows atmosphere, turn, orbital coast, TLI and array
   await expect(c).toHaveAttribute("data-ascent-stage", "parking");
   await expect(c).toHaveAttribute("data-upper-burning", "false");
   await expect(c).toHaveAttribute("data-core-burning", "false");
-  await page.screenshot({ path: "docs/screenshots/ascent-parking-orbit.png" });
+  await page.screenshot({
+    path: "test-results/screenshots/ascent-parking-orbit.png",
+  });
   await reach(page, c, 0.78);
   await expect(c).toHaveAttribute("data-upper-burning", "true");
-  await page.screenshot({ path: "docs/screenshots/ascent-tli.png" });
+  await page.screenshot({ path: "test-results/screenshots/ascent-tli.png" });
   await reach(page, c, 0.985);
   await expect(c).toHaveAttribute("data-panel-deployment", "1.0000");
   await expect(c).toHaveAttribute("data-upper-burning", "false");
@@ -152,7 +156,9 @@ test("real-vehicle guidance loss keeps the close camera in the same scale until 
       .split(",")
       .map(Number);
   expect(Math.hypot(...eye.map((n, i) => n - target[i]))).toBeLessThan(0.7);
-  await page.screenshot({ path: "docs/screenshots/ascent-guidance-loss.png" });
+  await page.screenshot({
+    path: "test-results/screenshots/ascent-guidance-loss.png",
+  });
   await page
     .getByRole("combobox", { name: "Playback speed", exact: true })
     .selectOption("8");
@@ -175,7 +181,9 @@ test("mobile free camera survives scale changes and keeps flight controls", asyn
   await expect(c).toHaveAttribute("data-camera-mode", "free");
   await page.getByRole("button", { name: "Follow", exact: true }).click();
   await expect(c).toHaveAttribute("data-launch-view", "surface");
-  await page.screenshot({ path: "docs/screenshots/surface-pad-mobile.png" });
+  await page.screenshot({
+    path: "test-results/screenshots/surface-pad-mobile.png",
+  });
   await page.getByRole("button", { name: "Rotate left", exact: true }).click();
   await page.getByRole("button", { name: "Resume", exact: true }).click();
   await page

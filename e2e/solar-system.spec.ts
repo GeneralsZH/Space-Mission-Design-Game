@@ -84,7 +84,9 @@ test("solar overview renders all planets and rings, tracks selections, pauses, z
   });
   const days = await canvas.getAttribute("data-solar-days"),
     earth = await canvas.getAttribute("data-earth-position");
-  await page.screenshot({ path: "docs/screenshots/solar-overview.png" });
+  await page.screenshot({
+    path: "test-results/screenshots/solar-overview.png",
+  });
   expect(await canvas.getAttribute("data-solar-days")).toBe(days);
   expect(await canvas.getAttribute("data-earth-position")).toBe(earth);
   const bounds = await canvas.boundingBox();
@@ -118,7 +120,7 @@ test("solar overview renders all planets and rings, tracks selections, pauses, z
     timeout: 20000,
   });
   await expect(atlas.locator(".solar-info")).toContainText("58,232");
-  await page.screenshot({ path: "docs/screenshots/solar-saturn.png" });
+  await page.screenshot({ path: "test-results/screenshots/solar-saturn.png" });
   if (await page.evaluate(() => document.fullscreenEnabled)) {
     await atlas
       .getByRole("button", { name: "Enter browser fullscreen", exact: true })
@@ -206,7 +208,7 @@ test("Russian mobile flight opens the atlas and returns without changing the mis
   await expect(canvas).toHaveAttribute("data-camera-settled", "true", {
     timeout: 20000,
   });
-  await page.screenshot({ path: "docs/screenshots/solar-mobile.png" });
+  await page.screenshot({ path: "test-results/screenshots/solar-mobile.png" });
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(390);

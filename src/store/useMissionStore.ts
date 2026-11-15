@@ -54,7 +54,7 @@ const safeStorage: StateStorage = {
   },
 };
 export const defaultSettings: Settings = {
-  language: "ru",
+  language: "en",
   mode: "learning",
   reducedMotion: false,
   motionPreference: "on",

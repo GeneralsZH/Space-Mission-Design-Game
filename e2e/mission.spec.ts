@@ -179,7 +179,7 @@ test("zero fuel launches normally, misses capture and only then reveals the caus
   ).toBeVisible();
   await expect(page.locator(".diagnosis-facts")).toContainText("0 m/s");
   await page.screenshot({
-    path: "docs/screenshots/trajectory-debrief.png",
+    path: "test-results/screenshots/trajectory-debrief.png",
     fullPage: true,
   });
 });
@@ -328,7 +328,7 @@ test("corrupt local save recovers without breaking the interface", async ({
   );
   await page.reload();
   await expect(
-    page.getByRole("button", { name: "Открыть контракт" }),
+    page.getByRole("button", { name: "Open mission brief" }),
   ).toBeVisible();
 });
 

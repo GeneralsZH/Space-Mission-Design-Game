@@ -98,7 +98,9 @@ test("solar panorama is part of the same moving flight and shares its pause cloc
   await expect(canvas).toHaveAttribute("data-playback-paused", "true");
   const days = await canvas.getAttribute("data-environment-days"),
     position = await canvas.getAttribute("data-spacecraft-position");
-  await page.screenshot({ path: "docs/screenshots/live-solar-panorama.png" });
+  await page.screenshot({
+    path: "test-results/screenshots/live-solar-panorama.png",
+  });
   expect(await canvas.getAttribute("data-environment-days")).toBe(days);
   expect(await canvas.getAttribute("data-spacecraft-position")).toBe(position);
   await expect(page.locator("canvas")).toHaveCount(1);
@@ -109,7 +111,9 @@ test("solar panorama is part of the same moving flight and shares its pause cloc
   await expect(canvas).toHaveAttribute("data-camera-settled", "true", {
     timeout: 20000,
   });
-  await page.screenshot({ path: "docs/screenshots/live-solar-launch.png" });
+  await page.screenshot({
+    path: "test-results/screenshots/live-solar-launch.png",
+  });
   await flight.getByRole("button", { name: "Resume", exact: true }).click();
   await expect
     .poll(async () =>
@@ -130,7 +134,9 @@ test("Russian mobile panorama keeps the flight and actions on the same screen", 
   await expect(canvas).toHaveAttribute("data-camera-settled", "true", {
     timeout: 20000,
   });
-  await page.screenshot({ path: "docs/screenshots/live-solar-mobile.png" });
+  await page.screenshot({
+    path: "test-results/screenshots/live-solar-mobile.png",
+  });
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(390);

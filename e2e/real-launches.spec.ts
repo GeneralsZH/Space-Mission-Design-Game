@@ -118,7 +118,7 @@ test("real vehicle purchase and pad selection survive reload and complete a repo
     { timeout: 20000 },
   );
   await page.locator(".real-launch-designer").screenshot({
-    path: "docs/screenshots/real-launch-designer.png",
+    path: "test-results/screenshots/real-launch-designer.png",
   });
   await nav(page, "Launch preparation");
   await page
@@ -198,7 +198,9 @@ for (const [id, site, boosters] of [
       .not.toBe(before);
     await page.getByRole("button", { name: "Pause", exact: true }).click();
     await expect(canvas).toHaveAttribute("data-playback-paused", "true");
-    await page.screenshot({ path: `docs/screenshots/real-${id}-launch.png` });
+    await page.screenshot({
+      path: `test-results/screenshots/real-${id}-launch.png`,
+    });
     await page
       .getByRole("combobox", { name: "Playback speed", exact: true })
       .selectOption("8");
@@ -239,7 +241,9 @@ test("Russian mobile launch shows the real site and retains mission controls", a
   });
   await expect(page.locator(".launch-caption")).toContainText("Восточный");
   await page.getByRole("button", { name: "Пауза", exact: true }).click();
-  await page.screenshot({ path: "docs/screenshots/real-launch-mobile.png" });
+  await page.screenshot({
+    path: "test-results/screenshots/real-launch-mobile.png",
+  });
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(390);

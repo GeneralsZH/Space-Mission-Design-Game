@@ -18,6 +18,7 @@ async function start(page: Page) {
       .WebGL2RenderingContext;
   });
   await page.goto("/");
+  await page.getByRole("button", { name: "Language", exact: true }).click();
   await page
     .getByRole("button", { name: "Настройки", exact: true })
     .last()
@@ -67,7 +68,7 @@ test("student buys, assembles, qualifies and flies their own project, including 
   await expect(page.getByTestId("cash")).toContainText("22.56");
   await page.getByRole("tab", { name: /Склад/ }).click();
   await page.screenshot({
-    path: "docs/screenshots/student-hangar.png",
+    path: "test-results/screenshots/student-hangar.png",
     fullPage: true,
   });
   await page.reload();
@@ -104,7 +105,7 @@ test("student buys, assembles, qualifies and flies their own project, including 
     page.getByRole("heading", { name: "Контракт выполнен", exact: true }),
   ).toBeVisible();
   await page.screenshot({
-    path: "docs/screenshots/student-debrief.png",
+    path: "test-results/screenshots/student-debrief.png",
     fullPage: true,
   });
   expect(errors).toEqual([]);
@@ -141,7 +142,7 @@ test("warehouse drag and drop respects category mounts and keyboard installation
     ).toBe(true);
   }
   await page.screenshot({
-    path: "docs/screenshots/student-mobile.png",
+    path: "test-results/screenshots/student-mobile.png",
     fullPage: true,
   });
 });

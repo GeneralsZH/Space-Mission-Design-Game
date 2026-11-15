@@ -86,7 +86,7 @@ test("finished flight survives reload and restarts repeatedly from the beginning
   expect(after.economy).toEqual(before.economy);
   expect(after.commands).toHaveLength(2);
   await page.screenshot({
-    path: "docs/screenshots/replay-recovery.png",
+    path: "test-results/screenshots/replay-recovery.png",
     fullPage: true,
   });
   for (const viewportWidth of [390, 768, 1366]) {

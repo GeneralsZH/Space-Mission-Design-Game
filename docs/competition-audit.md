@@ -85,7 +85,7 @@ Completed attempts are compared locally and exported in an HTML report with conf
 
 Final browser coverage: **all 27 distinct cases passed across the full regression and targeted reruns**. The last full run had 25 passes, one pause-sampling assertion failure and one serial-suite skip. After waiting for the canvas pause render before sampling time, all three live-playback cases passed (38.6 s), covering both the affected and skipped cases. The final upgraded journey/3D tests passed with no page errors; the journey also checks console errors and bundled science resources. No failing case remains unresolved.
 
-Screenshots: `docs/screenshots/lroc-science.png` and `docs/screenshots/lunar-two-body-3d.png`. The standalone HTML report is generated from each actual run; JSON save export remains available. Publication uses the existing public Site and its source repository, preserving the project identity and audience.
+Screenshots: `test-results/screenshots/lroc-science.png` and `test-results/screenshots/lunar-two-body-3d.png`. The standalone HTML report is generated from each actual run; JSON save export remains available. Publication uses the existing public Site and its source repository, preserving the project identity and audience.
 
 ## Practical limits
 
@@ -119,7 +119,7 @@ The fullscreen console traps keyboard focus, supports Escape, locks page scrolli
 
 Verification: TypeScript, ESLint, all 90 unit/integration tests and the production build passed. The final complete browser regression run passed all 37 discovered cases (4.9 min). A subsequently added fullscreen failure/debrief case also passed (5.9 s), bringing verified coverage to 38 distinct browser cases. New checks cover full-canvas viewport bounds at 1366 and 390 px, native browser fullscreen entry/exit, pause and speed, in-scene decisions and telemetry/log panels, keyboard exit, complete mission and report navigation, Russian mobile controls, and delayed failure diagnostics. Existing dashboard regressions explicitly select panel mode; fullscreen cases clear that preference to exercise the new default.
 
-Screenshots: `docs/screenshots/fullscreen-flight-1366.png`, `docs/screenshots/fullscreen-flight-390.png`, `docs/screenshots/fullscreen-flight-ru.png`.
+Screenshots: `test-results/screenshots/fullscreen-flight-1366.png`, `test-results/screenshots/fullscreen-flight-390.png`, `test-results/screenshots/fullscreen-flight-ru.png`.
 
 ## Custom orbit, survey trail, event plan and damage — 15 November 2026
 
@@ -129,7 +129,7 @@ Screenshots: `docs/screenshots/fullscreen-flight-1366.png`, `docs/screenshots/fu
 - [x] Advanced power integrates 512 time samples and actual geometric shadow. Unprotected risky flare continuation uses an explicit educational 45% remaining-generation rule, visible dark/tilted/cracked cells and persistent telemetry. Subsequent depletion disables systems and produces visible attitude loss; missed capture and communications remain distinct.
 - [x] Archived builds retain their previous rules. New/revised designs and explicit custom-orbit application enable `advancedFlight`; custom fields survive validated canonical JSON export/import and browser reload.
 
-Automated additions cover custom bounds and computed invariants, polar/equatorial access, saved replay, full custom mission/data conservation, ground geometry, damage versus healthy/archived power, early failure before observation, battery bounds and speed-aware event times. Four new Chromium cases exercise actual 3D survey persistence, causal damage/power loss and delayed diagnostics, orbital input/telemetry integration, and fullscreen controls at 390 px. Screenshots: `custom-orbit-trail.png`, `solar-cell-damage.png`, `advanced-flight-mobile.png` in `docs/screenshots`.
+Automated additions cover custom bounds and computed invariants, polar/equatorial access, saved replay, full custom mission/data conservation, ground geometry, damage versus healthy/archived power, early failure before observation, battery bounds and speed-aware event times. Four new Chromium cases exercise actual 3D survey persistence, causal damage/power loss and delayed diagnostics, orbital input/telemetry integration, and fullscreen controls at 390 px. Screenshots: `custom-orbit-trail.png`, `solar-cell-damage.png`, `advanced-flight-mobile.png` in `test-results/screenshots`.
 
 Verification: TypeScript, ESLint, **102 unit/integration tests** and the production build passed. The complete Chromium regression passed **all 42 cases** (5.9 min). After the final diagnostic wording and canonical attempt-identity fixes, all six advanced-flight and NASA journey/3D cases passed again (1.3 min). The added memory-saturation test proves that accepted trails stop before future polar samples; attempt IDs now survive build-key reordering during save validation. Feature cases capture page errors; none were recorded. Browser checks use software WebGL and responsive viewports, not physical mobile GPU certification. Core JS is ~201 KB gzip; the lazy shared 3D chunk remains ~251 KB gzip and emits the existing build-size warning.
 

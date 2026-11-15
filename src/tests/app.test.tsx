@@ -106,9 +106,16 @@ describe("application integration", () => {
     await user.click(screen.getByRole("button", { name: "Отменить" }));
     expect(screen.getByTestId("balance-energy")).toHaveTextContent("227");
   });
-  it("T-12 switches the key UI and html language to English", async () => {
+  it("T-12 starts in English and retains the Russian language switch", async () => {
     const user = userEvent.setup();
+    useMissionStore.getState().reset();
     render(<App />);
+    expect(document.documentElement.lang).toBe("en");
+    expect(
+      screen.getByRole("navigation", { name: "Main navigation" }),
+    ).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Language" }));
+    expect(document.documentElement.lang).toBe("ru");
     await user.click(screen.getByRole("button", { name: "Язык" }));
     expect(
       screen.getByRole("button", { name: "Open mission brief" }),

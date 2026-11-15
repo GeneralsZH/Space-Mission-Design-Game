@@ -30,7 +30,7 @@ async function builder(page: Page) {
           }),
         );
     },
-    { build: goldenBuild, settings: defaultSettings },
+    { build: goldenBuild, settings: { ...defaultSettings, language: "ru" } },
   );
   await page.goto("/");
   await page
@@ -51,7 +51,7 @@ test("3D renders, rotates, zooms, explodes and reacts to catalog changes", async
     timeout: 20000,
   });
   const before = await region.screenshot({
-    path: "docs/screenshots/spacecraft-3d.png",
+    path: "test-results/screenshots/spacecraft-3d.png",
   });
   await page
     .getByRole("button", { name: "Повернуть вправо", exact: true })

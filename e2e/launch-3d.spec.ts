@@ -73,7 +73,7 @@ test("launch is actual 3D, pause freezes flight, resume advances and skip enters
       { intervals: [150], timeout: 3000 },
     )
     .toBeGreaterThanOrEqual(3);
-  await region.screenshot({ path: "docs/screenshots/launch-3d.png" });
+  await region.screenshot({ path: "test-results/screenshots/launch-3d.png" });
   const before = await region.screenshot();
   await page.getByRole("button", { name: "Повернуть вправо" }).click();
   await expect

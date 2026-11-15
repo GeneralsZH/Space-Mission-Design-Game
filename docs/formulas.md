@@ -6,27 +6,27 @@
 
 Исходный код: src/engine/calculations.ts и src/engine/simulation.ts; константы: src/data/missionConfig.ts.
 
-| Величина         | Формула                                                      | Единица         |
-| ---------------- | ------------------------------------------------------------ | --------------- |
-| dryMass          | Σ masses компонентов                                         | kg              |
-| wetMass          | dryMass + propellant                                         | kg              |
-| payload          | launcher.payload × orbit.payloadFactor                       | kg              |
-| Δv               | Isp × 9.80665 × ln(wetMass/dryMass)                          | m/s             |
-| Δv margin        | available − profile.required − 150                           | m/s             |
-| burn mass        | wetMass × (1 − exp(−profile.required/(Isp×g0)))              | kg              |
-| sunPower         | panelRated × 0.9 × 0.95                                      | W               |
-| peakLoad         | bus + instruments + transmitter + heater                     | W               |
-| shadowLoad       | bus + 0.4 × instruments + heater                             | W               |
-| shadowNeed       | shadowLoad × shadowHours                                     | Wh              |
-| usableBattery    | nominalWh × 0.8 × 0.9                                        | Wh              |
-| cycleMargin      | (sunPower − peakLoad) × sunHours × 0.9 − shadowNeed          | Wh              |
-| generated        | Σ instrumentMbps × operatingHours × 3600/1000                | Gbit/виток      |
-| downlinkCapacity | antennaMbps × contactHours × 3600/1000                       | Gbit/виток      |
-| deliveryRatio    | min(1, capacity/generated); при generated=0 → 1              | доля            |
-| memoryRatio      | min(1, memory/(generated×4)); при generated=0 → 1            | доля            |
-| potentialScience | Σ weights × orbitFactor × 4 × min(deliveryRatio,memoryRatio) | игровые единицы |
-| cost             | launcher + Σ installed parts + current test credit + fuel×0.012 + overhead | M$ |
-| actual science   | полученная наука × сохранённая доля × переданная доля        | игровые единицы |
+| Величина         | Формула                                                                    | Единица         |
+| ---------------- | -------------------------------------------------------------------------- | --------------- |
+| dryMass          | Σ masses компонентов                                                       | kg              |
+| wetMass          | dryMass + propellant                                                       | kg              |
+| payload          | launcher.payload × orbit.payloadFactor                                     | kg              |
+| Δv               | Isp × 9.80665 × ln(wetMass/dryMass)                                        | m/s             |
+| Δv margin        | available − profile.required − 150                                         | m/s             |
+| burn mass        | wetMass × (1 − exp(−profile.required/(Isp×g0)))                            | kg              |
+| sunPower         | panelRated × 0.9 × 0.95                                                    | W               |
+| peakLoad         | bus + instruments + transmitter + heater                                   | W               |
+| shadowLoad       | bus + 0.4 × instruments + heater                                           | W               |
+| shadowNeed       | shadowLoad × shadowHours                                                   | Wh              |
+| usableBattery    | nominalWh × 0.8 × 0.9                                                      | Wh              |
+| cycleMargin      | (sunPower − peakLoad) × sunHours × 0.9 − shadowNeed                        | Wh              |
+| generated        | Σ instrumentMbps × operatingHours × 3600/1000                              | Gbit/виток      |
+| downlinkCapacity | antennaMbps × contactHours × 3600/1000                                     | Gbit/виток      |
+| deliveryRatio    | min(1, capacity/generated); при generated=0 → 1                            | доля            |
+| memoryRatio      | min(1, memory/(generated×4)); при generated=0 → 1                          | доля            |
+| potentialScience | Σ weights × orbitFactor × 4 × min(deliveryRatio,memoryRatio)               | игровые единицы |
+| cost             | launcher + Σ installed parts + current test credit + fuel×0.012 + overhead | M$              |
+| actual science   | полученная наука × сохранённая доля × переданная доля                      | игровые единицы |
 
 За виток заряд сначала пополняется до полезной ёмкости от солнечного избытка с учётом КПД, затем расходуется в тени. Выключенный радар уменьшает нагрузку и перестаёт генерировать данные/науку. Никакое значение W не сравнивается с Wh.
 
