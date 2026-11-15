@@ -11,6 +11,9 @@ import {
   Plus,
   Sun,
   BookOpen,
+  Volume2,
+  VolumeX,
+  Radio,
 } from "lucide-react";
 import type { Language, MissionRun } from "../types";
 import type { CameraCommand, CameraAction } from "./SpacecraftView";
@@ -19,14 +22,13 @@ import {
   sampleMission,
   transferPosition,
 } from "../features/playback/missionPlayback";
-import type {
-  CameraMode,
-  PlaybackFrame,
-} from "../features/playback/missionPlayback";
+import type { PlaybackFrame } from "../features/playback/missionPlayback";
 import { keplerState, elementsFor } from "../engine/orbital";
 import SceneBoundary from "./SceneBoundary";
 import FlightSystemMap from "./FlightSystemMap";
 import { realVehicle, launchSiteFor } from "../data/realLaunches";
+import { useAutoCamera } from "../features/playback/useAutoCamera";
+import { useMissionAudio } from "../features/playback/useMissionAudio";
 const Scene = lazy(() => import("./MissionScene"));
 
 function RouteMap({
@@ -198,12 +200,11 @@ export default function MissionViewer({
   const playback = useMissionStore((s) => s.settings.playback);
   const configure = useMissionStore((s) => s.configure);
   const [failed, setFailed] = useState(false);
-  const [cameraMode, setCameraModeState] = useState<CameraMode>("follow");
-  const [launchView, setLaunchView] = useState(true);
-  const setCameraMode = useCallback((mode: CameraMode) => {
-    if (mode !== "free") setLaunchView(mode === "follow");
-    setCameraModeState(mode);
-  }, []);
+  const camera = useAutoCamera();
+  const cameraMode = camera.mode;
+  const launchView = camera.launchView;
+  const setCameraMode = camera.select;
+  const audio = useMissionAudio(run, frame.progress, motionEnabled);
   const [command, setCommand] = useState<CameraCommand>({
     id: 0,
     action: "reset",
@@ -241,7 +242,8 @@ export default function MissionViewer({
             : "Stage finished in step mode."
           : null;
   const move = (action: CameraAction) => {
-    setCameraMode(action === "reset" ? "follow" : "free");
+    if (action === "reset") setCameraMode("follow");
+    else camera.manualCommand();
     setCommand((value) => ({ id: value.id + 1, action }));
   };
   const fallback = (
@@ -283,6 +285,58 @@ export default function MissionViewer({
           </button>
         </div>
         <div className="mission-camera-modes">
+          <button
+            className="scene-tool"
+            disabled={!show3d}
+            aria-label={l === "ru" ? "Автосопровождение" : "Automatic tracking"}
+            aria-pressed={camera.automatic}
+            title={
+              l === "ru"
+                ? "Возврат к аппарату через 4 секунды после вращения камеры"
+                : "Return to the spacecraft 4 seconds after camera interaction"
+            }
+            onClick={camera.toggle}
+          >
+            <Radio size={13} />
+            <span className="camera-mode-label">
+              {l === "ru" ? "Авто" : "Auto"}
+            </span>
+          </button>
+          <button
+            className="scene-tool"
+            aria-label={l === "ru" ? "Звук полёта" : "Flight sound"}
+            aria-pressed={audio.enabled}
+            data-audio-state={audio.enabled ? audio.state : "muted"}
+            title={
+              l === "ru"
+                ? "Синтезированные звуки миссии · нажмите для включения или отключения"
+                : "Designed mission audio · click to enable or mute"
+            }
+            onClick={audio.toggle}
+          >
+            {audio.enabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
+            <span className="camera-mode-label">
+              {audio.enabled && audio.state !== "running"
+                ? l === "ru"
+                  ? "Включить звук"
+                  : "Enable sound"
+                : l === "ru"
+                  ? "Звук"
+                  : "Sound"}
+            </span>
+          </button>
+          {audio.enabled && (
+            <input
+              className="flight-volume"
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              aria-label={l === "ru" ? "Громкость полёта" : "Flight volume"}
+              value={audio.volume}
+              onChange={(event) => audio.setVolume(Number(event.target.value))}
+            />
+          )}
           <button
             className="scene-tool"
             disabled={!show3d}
@@ -423,7 +477,7 @@ export default function MissionViewer({
                 clock={clock}
                 motionEnabled={motionEnabled}
                 cameraMode={cameraMode}
-                onCameraMode={setCameraMode}
+                onCameraInteraction={camera.interact}
                 command={command}
                 onReady={onReady}
                 launchView={launchView}
@@ -528,8 +582,12 @@ export default function MissionViewer({
           ))}
           <span>
             {l === "ru"
-              ? "Перетаскивание — свободная камера · колесо — масштаб"
-              : "Drag for free camera · scroll to zoom"}
+              ? camera.automatic
+                ? "Перетаскивание · авто через 4 с · колесо — масштаб"
+                : "Перетаскивание — свободная камера · колесо — масштаб"
+              : camera.automatic
+                ? "Drag · auto returns in 4 s · scroll to zoom"
+                : "Drag for free camera · scroll to zoom"}
           </span>
         </div>
       )}

@@ -94,6 +94,21 @@
 .immersive-flight .scene-toolbar > * {
   pointer-events: auto;
 }
+.immersive-flight .scene-toolbar {
+  flex-wrap: nowrap;
+}
+.immersive-flight .scene-mode {
+  flex-shrink: 0;
+}
+.immersive-flight .mission-camera-modes {
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.immersive-flight .mission-camera-modes > * {
+  flex-shrink: 0;
+}
 .immersive-flight .scene-tool,
 .immersive-flight .outlined,
 .immersive-flight select {

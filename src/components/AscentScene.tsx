@@ -51,7 +51,7 @@ export interface AscentProps {
   clock: RefObject<PlaybackFrame>;
   motionEnabled: boolean;
   cameraMode: CameraMode;
-  onCameraMode: (mode: CameraMode) => void;
+  onCameraInteraction: (active: boolean) => void;
   command: CameraCommand;
   speed: number;
 }
@@ -357,7 +357,7 @@ function TrackingCamera(props: AscentProps) {
   const { camera, gl, invalidate, size } = useThree(),
     controls = useRef<OrbitControls | null>(null),
     initialized = useRef(false);
-  const onCameraMode = props.onCameraMode;
+  const onCameraInteraction = props.onCameraInteraction;
   const vectors = useMemo(
     () => ({
       target: new Vector3(),
@@ -377,16 +377,19 @@ function TrackingCamera(props: AscentProps) {
     c.maxDistance = 50000;
     c.maxPolarAngle = Math.PI - 0.02;
     const change = () => invalidate(),
-      start = () => onCameraMode("free");
+      start = () => onCameraInteraction(true),
+      end = () => onCameraInteraction(false);
     c.addEventListener("change", change);
     c.addEventListener("start", start);
+    c.addEventListener("end", end);
     return () => {
       c.removeEventListener("change", change);
       c.removeEventListener("start", start);
+      c.removeEventListener("end", end);
       c.dispose();
       controls.current = null;
     };
-  }, [camera, gl, invalidate, onCameraMode]);
+  }, [camera, gl, invalidate, onCameraInteraction]);
   useEffect(() => {
     const c = controls.current;
     if (!c || props.command.action === "reset" || !props.command.id) return;

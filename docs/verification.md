@@ -1,5 +1,13 @@
 # Проверки
 
+## Automatic tracking and mission audio - 15 November 2026
+
+Automatic follow is enabled when opening the flight viewer. Manual drag, wheel and camera-button interactions temporarily release tracking; it returns four seconds after interaction ends. Explicit overview, Moon and solar panorama selections remain selected. Auto can be disabled; Follow and camera reset restore it. Gesture callbacks remain stable so an active drag does not recreate OrbitControls.
+
+Web Audio synthesizes filtered engine noise, separation cues, downlink tone, alerts and result cues without external audio assets. Real-vehicle burn/coast states use the same ascent profile as the graphics. Audio follows pause, stage completion, motion settings and tab visibility. A single flight audio context is closed on viewer exit; repeated playback frames do not repeat a cue. The viewer provides mute and volume controls, including in fullscreen. New saves default to sound enabled, and existing saved mute preferences are respected. Browser user activation is required for audible playback. Sound is designed sonification, not physical sound propagation in space.
+
+Verification: TypeScript, ESLint, all 130 unit/integration tests and the production build passed. Five Chromium browser cases passed in one final run (1.9 minutes): the new media journey plus both existing launch-3D and both flight-environment cases. The media journey measured a real Web Audio signal with an AnalyserNode, confirmed nonzero engine output and silence on pause, mute and zero volume, checked persisted mute, automatic return after dragging, moving camera position, manual tracking controls and mobile toolbar separation from telemetry. Unit tests cover hidden-tab silence, missing AudioContext, context cleanup and timer cancellation. No page errors were recorded by the media journey. The existing Vite large-3D-chunk warning remains; no audio downloads or new dependencies were introduced. Physical mobile devices and Safari audio policies were not tested.
+
 ## Очистка, английский язык и материалы заявки — 15 ноября 2026
 
 Из каждой исходной копии удалены 43 генерируемых PNG-снимка (10 160 736 байт), завершённый план работ и старый ручной скрипт browser-qa. Все Playwright-снимки перенаправлены в игнорируемую `test-results/screenshots`; документация больше не ссылается на удалённые файлы. Научные данные NASA, атрибуция, тесты, исходники и ранее запрошенная Word-инструкция сохранены. Удаление локальной игнорируемой папки `playwright-report` через PowerShell отклонено автоматической проверкой с сообщением `blocked by policy`; эта локальная папка не входит в Git.

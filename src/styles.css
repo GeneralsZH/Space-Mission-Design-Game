@@ -3643,3 +3643,10 @@ details > summary {
     flex-shrink: 0;
   }
 }
+
+.flight-volume {
+  width: 64px;
+  min-width: 40px;
+  accent-color: #2bd3e3;
+  align-self: center;
+}

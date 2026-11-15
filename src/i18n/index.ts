@@ -105,7 +105,7 @@ export const words = {
     schematic: "Схема аппарата",
     minimal: "Простая схема",
     motion: "Уменьшить движение",
-    sound: "Звуки команд",
+    sound: "Звуки полёта и команд",
     reset: "Новый проект",
     resetTitle: "Начать новый проект?",
     resetText:
@@ -215,7 +215,7 @@ export const words = {
     schematic: "Spacecraft schematic",
     minimal: "Minimal schematic",
     motion: "Reduce motion",
-    sound: "Command sounds",
+    sound: "Flight and command sounds",
     reset: "New project",
     resetTitle: "Start a new project?",
     resetText:

@@ -92,6 +92,7 @@ export default function App() {
         const target = event.target;
         if (
           s.settings.sound &&
+          s.page !== "control" &&
           target instanceof Element &&
           target.closest("button:not(:disabled)")
         )

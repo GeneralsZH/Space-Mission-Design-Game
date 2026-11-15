@@ -58,7 +58,7 @@ export const defaultSettings: Settings = {
   mode: "learning",
   reducedMotion: false,
   motionPreference: "on",
-  sound: false,
+  sound: true,
   graphics: "3d",
   playback: "live",
   playbackSpeed: 1,

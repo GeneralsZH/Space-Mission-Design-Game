@@ -42,6 +42,12 @@ npm run dev
 
 English is the default interface language. The EN/RU switch preserves an explicit saved choice. Build with `npm run build`; run checks with `npm run check`.
 
+## Flight camera and audio
+
+The flight starts with automatic camera tracking. Drag or zoom to inspect the scene; tracking resumes four seconds after the interaction ends. Turn **Auto** off to keep a free camera, or select an overview to keep that view. **Follow** and **Reset camera** restore automatic tracking.
+
+**Sound** controls synthesized engine, separation, telemetry and mission-event effects; the adjacent slider controls flight volume. Audio follows the visual burn/coast stages, becomes silent on pause or in a hidden tab, and releases its audio context when leaving the viewer. New installations enable sound by default; saved mute preferences are respected. Browsers may require a click on **Enable sound**. These effects are designed sonification, not recordings or acoustic propagation through vacuum. No external audio assets are downloaded.
+
 ## Submission materials
 
 - [Project summary - Word, 161 words](docs/Orbital_Mission_Lab_Project_Summary.docx)

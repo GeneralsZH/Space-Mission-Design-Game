@@ -43,7 +43,7 @@ interface Props {
   clock: RefObject<PlaybackFrame>;
   motionEnabled: boolean;
   cameraMode: CameraMode;
-  onCameraMode: (mode: CameraMode) => void;
+  onCameraInteraction: (active: boolean) => void;
   command: CameraCommand;
   onReady: (ready: boolean) => void;
   onContextLost: () => void;
@@ -393,7 +393,7 @@ function FlightCamera({
   clock,
   motionEnabled,
   cameraMode,
-  onCameraMode,
+  onCameraInteraction,
   command,
   speed,
 }: Omit<Props, "onReady" | "onContextLost">) {
@@ -425,17 +425,20 @@ function FlightCamera({
     controls.minPolarAngle = 0.08;
     controls.maxPolarAngle = Math.PI - 0.08;
     const changed = () => invalidate();
-    const interacted = () => onCameraMode("free");
+    const interacted = () => onCameraInteraction(true);
+    const ended = () => onCameraInteraction(false);
     controls.addEventListener("change", changed);
     controls.addEventListener("start", interacted);
+    controls.addEventListener("end", ended);
     controlsRef.current = controls;
     return () => {
       controls.removeEventListener("change", changed);
       controls.removeEventListener("start", interacted);
+      controls.removeEventListener("end", ended);
       controls.dispose();
       controlsRef.current = null;
     };
-  }, [camera, gl, invalidate, onCameraMode]);
+  }, [camera, gl, invalidate, onCameraInteraction]);
   useEffect(() => {
     const controls = controlsRef.current;
     if (!controls || command.action === "reset" || command.id === 0) return;
