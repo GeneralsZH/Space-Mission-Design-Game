@@ -57,7 +57,7 @@ export const defaultSettings: Settings = {
   language: "ru",
   mode: "learning",
   reducedMotion: false,
-  motionPreference: "system",
+  motionPreference: "on",
   sound: false,
   graphics: "3d",
   playback: "live",
@@ -90,7 +90,7 @@ interface MissionStore extends SaveData {
 const pickSave = (state: SaveData): SaveData => ({
   schemaVersion: 2,
   economy: state.economy,
-  build: state.build,
+  build: buildSchema.parse(state.build),
   settings: state.settings,
   seed: state.seed,
   commands: state.commands,
@@ -267,13 +267,22 @@ export const useMissionStore = create<MissionStore>()(
           flightSession: state.flightSession + 1,
           history: [],
           change: null,
-          settings: { ...state.settings, playback: "live" },
+          settings: {
+            ...state.settings,
+            playback: "live",
+            motionPreference: "on",
+          },
         });
       },
       restart: () => {
         const state = get();
+        const build = syncBuild(
+          { ...state.build, modelVersion: 2, advancedFlight: true },
+          state.economy,
+        );
         set({
-          run: createRun(state.build, state.seed),
+          build,
+          run: createRun(build, state.seed),
           commands: [],
           page: "builder",
           history: [],

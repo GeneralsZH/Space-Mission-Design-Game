@@ -5,6 +5,12 @@ import type {
   OrbitProfile,
 } from "../types";
 import { z } from "zod";
+import { realLauncherProfiles } from "./realLaunches";
+import {
+  eclipseSeconds,
+  orbitalParameters,
+  elementsFor,
+} from "../engine/orbital";
 
 export const physics = {
   g0: 9.80665,
@@ -48,12 +54,12 @@ export const missionConfig = {
   title: { ru: "Lunar Ice Mapper", en: "Lunar Ice Mapper" },
   destination: { ru: "Луна · Южный полюс", en: "Moon · South pole" },
   objectives: {
-    ru: "Проверьте признаки водяного льда в полярных кратерах и передайте измерения на Землю.",
-    en: "Investigate water ice signatures in polar craters and deliver measurements to Earth.",
+    ru: "Спроектируйте полярный аппарат для исследования кандидатов на лёд. Передайте моделируемые данные и сравните доступ с архивной освещённостью LROC.",
+    en: "Design a polar orbiter to investigate candidate ice sites. Downlink simulated data and compare access with archived LROC illumination.",
   },
   scienceRequirements: {
-    ru: "Не менее 120 единиц доставленной науки; прибор определения состава; аппарат должен пережить передачу.",
-    en: "At least 120 delivered science units; a composition instrument; the spacecraft must survive downlink.",
+    ru: "Не менее 120 игровых баллов науки; прибор состава; пережить передачу. В новых миссиях также нужен геометрический доступ хотя бы к одной архивной точке.",
+    en: "At least 120 delivered game science points; a composition instrument; survive downlink. New missions also require geometric access to at least one archival sample.",
   },
   requiredInstrumentTags: ["composition"],
   budgetMUsd: 110,
@@ -378,6 +384,38 @@ export const orbits: OrbitProfile[] = [
     payloadFactor: 1.1,
   },
 ];
+const computedOrbits = new Map<string, OrbitProfile>();
+export function resolveOrbit(
+  build: Pick<Build, "orbitId" | "modelVersion" | "customOrbit">,
+): OrbitProfile {
+  const legacy = orbits.find((o) => o.id === build.orbitId);
+  if (!legacy) throw new Error("Unknown orbit");
+  if (build.modelVersion !== 2) return legacy;
+  const elements = elementsFor(build),
+    key = JSON.stringify([legacy.id, elements]);
+  if (!computedOrbits.has(key)) {
+    const o = orbitalParameters(elements),
+      shadow = eclipseSeconds(elements) / 3600,
+      period = o.periodSeconds / 3600;
+    const duty = legacy.operatingHours / (legacy.sunHours + legacy.shadowHours),
+      contact = legacy.contactHours / (legacy.sunHours + legacy.shadowHours);
+    if (computedOrbits.size >= 128)
+      computedOrbits.delete(computedOrbits.keys().next().value!);
+    computedOrbits.set(key, {
+      ...legacy,
+      description: {
+        ru: `${elements.periapsisKm}–${elements.apoapsisKm} км · ${elements.inclinationDeg}° · сценарный β ${elements.betaDeg}°`,
+        en: `${elements.periapsisKm}–${elements.apoapsisKm} km · ${elements.inclinationDeg}° · assumed solar β ${elements.betaDeg}°`,
+      },
+      sunHours: period - shadow,
+      shadowHours: shadow,
+      operatingHours: period * duty,
+      contactHours: period * contact,
+      requiredDeltaV: o.captureDeltaVMs,
+    });
+  }
+  return computedOrbits.get(key)!;
+}
 export const launchers: LauncherProfile[] = [
   {
     id: "light",
@@ -397,6 +435,7 @@ export const launchers: LauncherProfile[] = [
     payloadKg: 1000,
     costMUsd: 42,
   },
+  ...realLauncherProfiles,
 ];
 export const goldenBuild: Build = {
   moduleIds: [

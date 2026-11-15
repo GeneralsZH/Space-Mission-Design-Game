@@ -9,6 +9,8 @@ import {
   Maximize2,
   Minus,
   Plus,
+  Sun,
+  BookOpen,
 } from "lucide-react";
 import type { Language, MissionRun } from "../types";
 import type { CameraCommand, CameraAction } from "./SpacecraftView";
@@ -21,7 +23,10 @@ import type {
   CameraMode,
   PlaybackFrame,
 } from "../features/playback/missionPlayback";
+import { keplerState, elementsFor } from "../engine/orbital";
 import SceneBoundary from "./SceneBoundary";
+import FlightSystemMap from "./FlightSystemMap";
+import { realVehicle, launchSiteFor } from "../data/realLaunches";
 const Scene = lazy(() => import("./MissionScene"));
 
 function RouteMap({
@@ -174,6 +179,9 @@ export default function MissionViewer({
   frame,
   motionEnabled,
   onReady,
+  onPlay,
+  immersive = false,
+  onChooseAction,
 }: {
   run: MissionRun;
   language: Language;
@@ -181,24 +189,57 @@ export default function MissionViewer({
   frame: PlaybackFrame;
   motionEnabled: boolean;
   onReady: (ready: boolean) => void;
+  onPlay: () => void;
+  immersive?: boolean;
+  onChooseAction?: () => void;
 }) {
   const graphics = useMissionStore((s) => s.settings.graphics);
   const speed = useMissionStore((s) => s.settings.playbackSpeed);
+  const playback = useMissionStore((s) => s.settings.playback);
   const configure = useMissionStore((s) => s.configure);
   const [failed, setFailed] = useState(false);
-  const [cameraMode, setCameraMode] = useState<CameraMode>("follow");
+  const [cameraMode, setCameraModeState] = useState<CameraMode>("follow");
+  const [launchView, setLaunchView] = useState(true);
+  const setCameraMode = useCallback((mode: CameraMode) => {
+    if (mode !== "free") setLaunchView(mode === "follow");
+    setCameraModeState(mode);
+  }, []);
   const [command, setCommand] = useState<CameraCommand>({
     id: 0,
     action: "reset",
   });
   const supported = "WebGL2RenderingContext" in window;
   const show3d = supported && !failed && graphics === "3d";
-  const visualProgress = motionEnabled ? frame.progress : 0;
+  const visualProgress = frame.progress;
   const pose = sampleMission(run, frame.progress);
   const fail = useCallback(() => {
     setFailed(true);
     onReady(false);
   }, [onReady]);
+  const play = () => {
+    if (failed || graphics !== "3d") {
+      onReady(false);
+      setFailed(false);
+    }
+    onPlay();
+  };
+  const recoveryReason = run.result
+    ? l === "ru"
+      ? "Полёт завершён. Можно посмотреть запуск заново."
+      : "Flight complete. Watch again from liftoff."
+    : !motionEnabled
+      ? l === "ru"
+        ? "Анимация выключена. Время полёта остановлено."
+        : "Animation is off. Flight time is stopped."
+      : run.paused
+        ? l === "ru"
+          ? "Полёт сохранён на паузе."
+          : "Flight is paused."
+        : playback === "step" && frame.progress >= 1
+          ? l === "ru"
+            ? "Этап завершён в пошаговом режиме."
+            : "Stage finished in step mode."
+          : null;
   const move = (action: CameraAction) => {
     setCameraMode(action === "reset" ? "follow" : "free");
     setCommand((value) => ({ id: value.id + 1, action }));
@@ -244,22 +285,88 @@ export default function MissionViewer({
         <div className="mission-camera-modes">
           <button
             className="scene-tool"
+            disabled={!show3d}
+            aria-pressed={cameraMode === "solar"}
+            aria-label={
+              l === "ru" ? "Обзор системы в полёте" : "In-flight solar panorama"
+            }
+            title={
+              l === "ru"
+                ? "Солнечная система без остановки полёта"
+                : "Solar system without stopping flight"
+            }
+            onClick={() =>
+              setCameraMode(cameraMode === "solar" ? "follow" : "solar")
+            }
+          >
+            <Sun size={13} />
+            <span className="camera-mode-label">
+              {l === "ru" ? "Система" : "System"}
+            </span>
+          </button>
+          <button
+            className="scene-tool"
+            aria-label={
+              l === "ru" ? "Открыть Солнечную систему" : "Explore solar system"
+            }
+            title={l === "ru" ? "Солнечная система" : "Solar system"}
+            onClick={() => useMissionStore.getState().navigate("solarSystem")}
+          >
+            <BookOpen size={13} />
+            <span className="camera-mode-label">
+              {l === "ru" ? "Атлас" : "Atlas"}
+            </span>
+          </button>
+          <button
+            className="scene-tool"
             aria-pressed={cameraMode === "follow"}
+            aria-label={l === "ru" ? "Сопровождение" : "Follow"}
             onClick={() => setCameraMode("follow")}
           >
             <Crosshair size={13} />
-            {l === "ru" ? "Сопровождение" : "Follow"}
+            <span className="camera-mode-label">
+              {l === "ru" ? "Сопровождение" : "Follow"}
+            </span>
           </button>
           <button
             className="scene-tool"
             aria-pressed={cameraMode === "overview"}
+            aria-label={l === "ru" ? "Весь маршрут" : "Full route"}
             onClick={() => setCameraMode("overview")}
           >
             <Globe2 size={13} />
-            {l === "ru" ? "Весь маршрут" : "Full route"}
+            <span className="camera-mode-label">
+              {l === "ru" ? "Весь маршрут" : "Full route"}
+            </span>
+          </button>
+          <button
+            className="scene-tool"
+            aria-label={
+              l === "ru" ? "Показать съёмку на Луне" : "Show lunar survey"
+            }
+            title={l === "ru" ? "Показать съёмку на Луне" : "Show lunar survey"}
+            aria-pressed={cameraMode === "moon"}
+            onClick={() => setCameraMode("moon")}
+          >
+            <Globe2 size={13} />
+            {l === "ru" ? "Луна" : "Moon"}
           </button>
         </div>
       </div>
+      {recoveryReason && (!run.crisis || run.paused || !motionEnabled) && (
+        <div className="animation-recovery" aria-live="polite">
+          <span>{recoveryReason}</span>
+          <button className="button primary" onClick={play}>
+            {run.result
+              ? l === "ru"
+                ? "Смотреть 3D заново"
+                : "Watch 3D again"
+              : l === "ru"
+                ? "Включить 3D-анимацию"
+                : "Play 3D animation"}
+          </button>
+        </div>
+      )}
       {graphics === "3d" && !show3d && (
         <p className="scene-fallback" role="status">
           {l === "ru"
@@ -319,8 +426,10 @@ export default function MissionViewer({
                 onCameraMode={setCameraMode}
                 command={command}
                 onReady={onReady}
+                launchView={launchView}
                 onContextLost={fail}
                 speed={speed}
+                language={l}
               />
             </Suspense>
           </SceneBoundary>
@@ -329,6 +438,22 @@ export default function MissionViewer({
             <span>● {l === "ru" ? "Луна" : "Moon"}</span>
             <span className="mono">LIM-01</span>
           </div>
+          <FlightSystemMap
+            run={run}
+            progress={frame.progress}
+            language={l}
+            panorama={cameraMode === "solar"}
+            onToggle={() =>
+              setCameraMode(cameraMode === "solar" ? "follow" : "solar")
+            }
+          />
+          {cameraMode === "solar" && (
+            <p className="flight-panorama-note">
+              {l === "ru"
+                ? "Системный масштаб · планеты и область Земля–Луна увеличены · миссия продолжается"
+                : "System scale · planets and Earth–Moon region enlarged · mission continues"}
+            </p>
+          )}
           {run.crisis && (
             <div className="mission-crisis-overlay" aria-live="polite">
               <span>
@@ -338,12 +463,16 @@ export default function MissionViewer({
               </span>
               <button
                 className="scene-tool"
-                onClick={() =>
+                onClick={() => {
+                  if (onChooseAction) {
+                    onChooseAction();
+                    return;
+                  }
                   document.getElementById("mission-decision")?.scrollIntoView({
                     behavior: motionEnabled ? "smooth" : "instant",
                     block: "center",
-                  })
-                }
+                  });
+                }}
               >
                 {l === "ru" ? "Выбрать действие ↓" : "Choose an action ↓"}
               </button>
@@ -412,13 +541,38 @@ export default function MissionViewer({
         </div>
       </div>
       {run.phase === "launched" && (
-        <p className="launch-caption mono">LIFTOFF — LIM-01</p>
+        <p className="launch-caption mono">
+          {realVehicle(run.build.launcherId)
+            ? `${realVehicle(run.build.launcherId)!.name[l]} · ${launchSiteFor(run.build)!.name[l]}`
+            : "LIFTOFF — LIM-01"}
+        </p>
       )}
-      {show3d && <RouteMap run={run} progress={visualProgress} compact />}
+      {show3d && !immersive && (
+        <RouteMap run={run} progress={visualProgress} compact />
+      )}
+      {run.build.modelVersion === 2 && run.phase === "scienceOperations" && (
+        <p className="mono tiny" data-testid="orbital-state">
+          {(() => {
+            const q = keplerState(elementsFor(run.build), visualProgress);
+            return `${q.altitudeKm.toFixed(1)} km · ${(q.speedMs / 1000).toFixed(3)} km/s · two-body model`;
+          })()}
+          <small className="survey-state-key">
+            {l === "ru"
+              ? "Голубая полоса — моделируемая зона съёмки"
+              : "Cyan band — simulated survey coverage"}
+          </small>
+        </p>
+      )}
       <p className="mission-scale-note">
-        {l === "ru"
-          ? "Учебная визуализация · масштаб и время сжаты"
-          : "Educational visualization · compressed scale and time"}
+        {realVehicle(run.build.launcherId) &&
+        run.phase === "launched" &&
+        launchView
+          ? l === "ru"
+            ? "Стартовый кадр: Земля R 6371 км · ракета в метрах · сценарная траектория и ускоренное время · NASA Blue Marble"
+            : "Launch view: Earth R 6371 km · vehicle in metres · illustrative trajectory and accelerated time · NASA Blue Marble"
+          : l === "ru"
+            ? "Учебная визуализация · масштаб и время сжаты · Земля: NASA Blue Marble · Луна: NASA SVS / LROC / LOLA"
+            : "Educational visualization · compressed scale and time · Earth: NASA Blue Marble · Moon: NASA SVS / LROC / LOLA"}
       </p>
     </div>
   );

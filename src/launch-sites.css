@@ -1,0 +1,176 @@
+.real-launch-designer {
+  margin: 24px 0;
+}
+.real-launch-designer h2 {
+  margin: 8px 0 12px;
+}
+.real-vehicle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 22px 0;
+}
+.real-vehicle-card {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 16px;
+  background: #0b1d30;
+  border: 1px solid #35516a;
+  border-radius: 7px;
+  color: #a6bfd3;
+  text-align: left;
+}
+.real-vehicle-card strong {
+  color: #edf7ff;
+  font-size: 15px;
+}
+.real-vehicle-card > span {
+  font-size: 10px;
+}
+.real-vehicle-card small {
+  font-size: 10px;
+  color: #819aae;
+}
+.real-vehicle-card.active {
+  border-color: #53d9d9;
+  background: #11303e;
+}
+.real-vehicle-card > svg:nth-of-type(2) {
+  position: absolute;
+  right: 14px;
+  top: 16px;
+  color: #62e2da;
+}
+.launch-site-layout {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1.2fr 1fr;
+  margin: 20px 0;
+}
+.launch-world-map {
+  position: relative;
+  border: 1px solid #3c5c70;
+  border-radius: 8px;
+  align-self: center;
+  overflow: hidden;
+  background: #071326;
+  aspect-ratio: 2;
+}
+.launch-world-map img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  opacity: 0.8;
+}
+.launch-map-pin {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: #b5cada;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.launch-map-pin.selected {
+  width: 12px;
+  height: 12px;
+  background: #65fff0;
+  border: 2px solid #fff;
+  box-shadow:
+    0 0 0 5px #38d2cc44,
+    0 0 16px #22e8dd;
+  z-index: 2;
+}
+.launch-map-credit {
+  position: absolute;
+  bottom: 5px;
+  right: 7px;
+  font-size: 7px;
+  color: #b2cfde;
+  text-shadow: 0 1px 3px #000;
+}
+.launch-site-options {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 12px;
+}
+.launch-site-options button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #0b2031;
+  border: 1px solid #29485e;
+  border-radius: 6px;
+  text-align: left;
+  color: #c0d9e8;
+}
+.launch-site-options button[aria-pressed="true"] {
+  border-color: #3fced0;
+  background: #133b46;
+}
+.launch-site-options button > span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.launch-site-options strong {
+  font-size: 11px;
+}
+.launch-site-options small {
+  font-size: 9px;
+  color: #91aabb;
+}
+.launch-site-options button > svg:last-child {
+  margin-left: auto;
+}
+.launch-site-summary {
+  padding: 18px 0;
+  border-top: 1px solid #304b61;
+}
+.launch-site-summary h3 {
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+.launch-site-summary > p {
+  color: #9eb8ca;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.launch-source-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 10px;
+}
+.launch-source-links a {
+  color: #77d2db;
+}
+.launch-site-empty {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 18px 0;
+  color: #8dacc0;
+  font-size: 12px;
+}
+.real-launch-designer button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+@media (max-width: 800px) {
+  .launch-site-layout {
+    grid-template-columns: 1fr;
+  }
+  .real-vehicle-card {
+    padding: 12px;
+  }
+  .real-vehicle-card strong {
+    font-size: 13px;
+  }
+}

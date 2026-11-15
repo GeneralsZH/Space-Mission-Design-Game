@@ -1,6 +1,6 @@
 import {
   missionConfig as mission,
-  orbits,
+  resolveOrbit,
   physics as p,
 } from "../data/missionConfig";
 import type {
@@ -20,6 +20,12 @@ import {
   powerCycle,
   predictIncident,
 } from "./incidents";
+import {
+  coverageSummary,
+  observeOrbit,
+  observationFootprintKm,
+  observationEndProgress,
+} from "./coverage";
 
 export function random(seed: number): [number, number] {
   let state = seed | 0;
@@ -33,6 +39,9 @@ export function createRun(build: Build, seed = 42): MissionRun {
     throw new Error("Invalid seed");
   const stats = calculate(build);
   return {
+    observedCellIds: [],
+    solarEfficiency: 1,
+    scanPasses: [],
     incident: null,
     operations: {
       disabledInstrumentIds: [],
@@ -85,6 +94,8 @@ export function assessResult(run: MissionRun): MissionResult {
     clamp(run.deliveredScience / mission.scienceTarget) * 100;
   const success =
     !run.incident &&
+    (run.build.modelVersion !== 2 ||
+      coverageSummary(run.observedCellIds).observed > 0) &&
     selectedComponents(run.build).some((c) =>
       c.tags?.includes("composition"),
     ) &&
@@ -101,6 +112,16 @@ export function assessResult(run: MissionRun): MissionResult {
     100,
   );
   const recommendations: Text[] = [];
+  if (run.build.modelVersion === 2 && run.observedCellIds.length === 0)
+    recommendations.push({
+      ru: "Аппарат не получил геометрического доступа к архивным точкам южного полюса при записи данных. Проверьте наклонение, полосу обзора, цель и свободную память.",
+      en: "No geometric access to south-pole archival samples was recorded while collecting data. Check inclination, footprint, target and available memory.",
+    });
+  if ((run.solarEfficiency ?? 1) < 1)
+    recommendations.push({
+      ru: "После сценарного повреждения панелей солнечная выработка составила 45% исходной. Снизьте нагрузку или пересмотрите защиту; это учебная модель деградации.",
+      en: "Scenario solar-cell damage reduced generation to 45% of its original value. Reduce loads or revise protection; this is an educational degradation model.",
+    });
   if (run.operations.antenna === "stowed")
     recommendations.push({
       ru: "Сеанс завершился со сложенной антенной: связь с Землёй не была установлена. В следующей попытке проверьте ориентацию перед передачей.",
@@ -227,9 +248,129 @@ export function transition(
   const run = structuredClone(state);
   const stats = calculate(run.build);
   const parts = selectedComponents(run.build);
-  const orbit = orbits.find((o) => o.id === run.build.orbitId)!;
+  const orbit = resolveOrbit(run.build);
   if (command.type === "ChooseDecision") {
     if (!run.crisis) return state;
+    if (run.build.modelVersion === 2) {
+      const safe = command.choice === "safe";
+      if (run.crisis === "flare") {
+        const rating = sum(parts, (c) =>
+          ["bus", "radiation"].includes(c.category) ? (c.protection ?? 0) : 0,
+        );
+        // An explicit educational hardness threshold, not a radiation dose or
+        // calibrated failure probability. No random draw is used in this model.
+        if (safe) {
+          run.scienceFactor *= p.safeScienceFactor;
+          run.elapsedHours += p.flareDelayHours;
+          log(
+            run,
+            "Safe mode: пауза 6 h, игровой научный индекс ×0.92.",
+            "Safe mode: 6 h pause; game science index ×0.92.",
+            "warning",
+          );
+        } else if (rating < 0.35) {
+          run.health -= p.flareHealthLoss;
+          run.scienceFactor *= 1 - p.flareScienceLoss;
+          if (run.build.advancedFlight) {
+            run.solarEfficiency = 0.45;
+            log(
+              run,
+              "Учебный сценарий: ячейки солнечных панелей повреждены. Выработка 45% исходной; последующие энергобалансы используют это значение.",
+              "Educational scenario: solar cells damaged. Generation is 45% of rated usable output; subsequent power balances use this value.",
+              "error",
+            );
+          }
+          log(
+            run,
+            `Сценарный порог защиты не выполнен: ${rating.toFixed(2)} < 0.35. Смоделирован сбой электроники.`,
+            `Scenario shielding criterion not met: ${rating.toFixed(2)} < 0.35. Simulated electronics upset.`,
+            "error",
+          );
+        } else
+          log(
+            run,
+            `Сценарный порог защиты выполнен: ${rating.toFixed(2)} ≥ 0.35.`,
+            `Scenario shielding criterion met: ${rating.toFixed(2)} ≥ 0.35.`,
+            "success",
+          );
+        run.flareResolved = true;
+      } else {
+        const off = sum(
+          parts.filter(
+            (c) =>
+              c.category === "instrument" &&
+              (run.operations.disabledInstrumentIds.includes(c.id) ||
+                (c.id === "radar" && run.radarDisabled)),
+          ),
+          (c) => c.powerW,
+        );
+        const hotel =
+          sum(
+            parts.filter((c) => c.category === "bus"),
+            (c) => c.powerW,
+          ) +
+          (parts.some((c) => c.category === "thermal")
+            ? p.protectedHeaterW
+            : p.unprotectedHeaterW);
+        const load = safe
+            ? hotel
+            : Math.max(0, stats.shadowLoadW - off * p.shadowInstrumentDuty),
+          need = load * p.extendedShadowHours,
+          available = run.chargeWh;
+        run.elapsedHours += p.extendedShadowHours;
+        run.chargeWh = Math.max(0, available - need);
+        run.eclipseResolved = true;
+        if (safe) {
+          run.radarDisabled = true;
+          run.scienceFactor *= p.radarShutdownScienceFactor;
+        }
+        log(
+          run,
+          `Продлённая тень: ${load.toFixed(1)} W × 40 min = ${need.toFixed(1)} Wh; было ${available.toFixed(1)} Wh.`,
+          `Extended eclipse: ${load.toFixed(1)} W × 40 min = ${need.toFixed(1)} Wh; available ${available.toFixed(1)} Wh.`,
+          available >= need ? "info" : "error",
+        );
+        if (available < need) {
+          run.crisis = null;
+          run.health = 0;
+          return enterIncident(run, {
+            kind: "power",
+            sourcePhase: "scienceOperations",
+            triggerProgress: clamp(
+              available / Math.max(need, 1e-9),
+              0.02,
+              0.98,
+            ),
+            title: {
+              ru: "Энергия продлённой тени исчерпана",
+              en: "Extended-eclipse energy exhausted",
+            },
+            observation: {
+              ru: "Бортовая сеть обесточена.",
+              en: "Spacecraft bus power lost.",
+            },
+            causes: [
+              {
+                code: "eclipse-energy",
+                title: {
+                  ru: "Недостаточный запас энергии",
+                  en: "Insufficient stored energy",
+                },
+                actual: `${available.toFixed(1)} Wh`,
+                expected: `≥ ${need.toFixed(1)} Wh`,
+                explanation: {
+                  ru: "Расход вычислен из выбранной нагрузки и длительности затмения; случайный исход не используется.",
+                  en: "Consumption follows selected load and eclipse duration; no random failure draw is used.",
+                },
+              },
+            ],
+          });
+        }
+      }
+      run.crisis = null;
+      if (run.health <= 0) return enterIncident(run, crisisIncident(run));
+      return run;
+    }
     const [roll, next] = random(run.rng);
     run.rng = next;
     const safe = command.choice === "safe";
@@ -361,15 +502,19 @@ export function transition(
     run.fuelKg = Math.max(0, run.fuelKg - consumed);
     log(
       run,
-      `Торможение ${orbit.requiredDeltaV} m/s. Остаток топлива ${run.fuelKg.toFixed(1)} kg.`,
-      `Insertion burn ${orbit.requiredDeltaV} m/s. Propellant remaining ${run.fuelKg.toFixed(1)} kg.`,
+      `Торможение ${run.build.modelVersion === 2 ? orbit.requiredDeltaV.toFixed(1) : orbit.requiredDeltaV} m/s. Остаток топлива ${run.fuelKg.toFixed(1)} kg.`,
+      `Insertion burn ${run.build.modelVersion === 2 ? orbit.requiredDeltaV.toFixed(1) : orbit.requiredDeltaV} m/s. Propellant remaining ${run.fuelKg.toFixed(1)} kg.`,
       "success",
     );
     run.phase = "scienceOperations";
     log(
       run,
-      "Полярная орбита достигнута. Начало научной программы.",
-      "Polar orbit acquired. Science program begins.",
+      run.build.customOrbit
+        ? "Расчётная лунная орбита достигнута. Начало научной программы."
+        : "Полярная орбита достигнута. Начало научной программы.",
+      run.build.customOrbit
+        ? "Designed lunar orbit acquired. Science program begins."
+        : "Polar orbit acquired. Science program begins.",
       "success",
     );
   } else if (run.phase === "scienceOperations") {
@@ -387,18 +532,25 @@ export function transition(
         !(run.radarDisabled && c.id === "radar") &&
         !run.operations.disabledInstrumentIds.includes(c.id),
     );
+    const duty = orbit.operatingHours / (orbit.sunHours + orbit.shadowHours);
+    const acquisitionFraction = run.build.advancedFlight
+      ? clamp((Math.min(fault?.triggerProgress ?? 1, 0.5 + duty) - 0.5) / duty)
+      : (fault?.triggerProgress ?? 1);
     const produced =
       sum(active, (c) => c.dataMbps ?? 0) *
       orbit.operatingHours *
       3.6 *
       run.scienceFactor *
-      (fault?.triggerProgress ?? 1);
+      acquisitionFraction;
     const science =
       sum(active, (c) => c.science ?? 0) *
       orbit.scienceFactor *
       run.scienceFactor *
       (run.operations.target === "pole" ? 1 : 0.65) *
-      (fault?.triggerProgress ?? 1);
+      acquisitionFraction;
+    const coveredUntil = run.build.advancedFlight
+      ? Math.min(fault?.triggerProgress ?? 1, observationEndProgress(run))
+      : (fault?.triggerProgress ?? 1);
     const accepted = Math.min(
       produced,
       Math.max(0, stats.memoryGbit - run.storedGbit),
@@ -409,6 +561,23 @@ export function transition(
     run.lostGbit += produced - accepted;
     run.storedScience += science * fraction;
     run.lostScience += science * (1 - fraction);
+    if (run.build.modelVersion === 2 && accepted > 0)
+      run.observedCellIds = [
+        ...new Set([
+          ...run.observedCellIds,
+          ...observeOrbit(run, coveredUntil),
+        ]),
+      ];
+    if (run.build.modelVersion === 2 && accepted > 0) {
+      const fov = observationFootprintKm(run).fovDeg;
+      if (fov > 0)
+        (run.scanPasses ??= []).push({
+          orbit: run.orbit,
+          progress: coveredUntil,
+          fovDeg: fov,
+          target: run.operations.target,
+        });
+    }
     run.chargeWh = Math.max(0, powerCycle(run).endCharge);
     if (!fault) run.orbit++;
     run.elapsedHours +=

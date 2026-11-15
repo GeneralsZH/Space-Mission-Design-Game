@@ -241,6 +241,30 @@ describe("live playback commands", () => {
     frames(100);
     expect(useMissionStore.getState().run.phase).toBe("launched");
   });
+  it("does not run an invisible flight with motion off, then starts and freezes at its current position", () => {
+    const { result, rerender } = renderHook(
+      ({ enabled }) =>
+        useMissionPlayback(
+          useMissionStore((s) => s.run),
+          true,
+          enabled,
+        ),
+      { initialProps: { enabled: false } },
+    );
+    frames(100);
+    expect(result.current.clock.current.seconds).toBe(0);
+    expect(useMissionStore.getState().run.phase).toBe("launched");
+    rerender({ enabled: true });
+    frames(3);
+    expect(result.current.clock.current.seconds).toBeGreaterThan(0);
+    rerender({ enabled: false });
+    const frozen = result.current.clock.current.progress;
+    frames(100);
+    expect(result.current.clock.current.progress).toBe(frozen);
+    rerender({ enabled: true });
+    frames(3);
+    expect(result.current.clock.current.progress).toBeGreaterThan(frozen);
+  });
   it("preserves manual mode even after the visual animation finishes", () => {
     useMissionStore.getState().configure({ playback: "step" });
     renderHook(() =>

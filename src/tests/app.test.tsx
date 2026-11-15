@@ -28,7 +28,7 @@ describe("application integration", () => {
     }
     const before = useMissionStore.getState();
     expect(before.run.result).toBeDefined();
-    s.configure({ playback: "step" });
+    s.configure({ playback: "step", motionPreference: "off" });
     s.replayFlight();
     const after = useMissionStore.getState();
     expect(after.build).toEqual(before.build);
@@ -37,6 +37,7 @@ describe("application integration", () => {
     expect(after.run.result).toBeUndefined();
     expect(after.run.paused).toBe(false);
     expect(after.settings.playback).toBe("live");
+    expect(after.settings.motionPreference).toBe("on");
     expect(after.commands).toEqual([
       { type: "Validate" },
       { type: "Launch", seed: 42 },

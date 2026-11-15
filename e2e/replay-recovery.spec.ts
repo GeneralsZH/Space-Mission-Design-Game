@@ -102,7 +102,7 @@ test("finished flight survives reload and restarts repeatedly from the beginning
     ).toBeVisible();
   }
 });
-test("a paused save resumes live and an explicit animation choice survives Windows Reduce Motion and reload", async ({
+test("continuing a paused save automatically enables live animation despite Windows Reduce Motion", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -120,9 +120,9 @@ test("a paused save resumes live and an explicit animation choice survives Windo
   await expect(
     page.getByRole("button", { name: "Пауза", exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Движение: выкл", exact: true })
-    .click();
+  await expect(
+    page.getByRole("button", { name: "Движение: вкл", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
   await page.reload();
   await page
     .getByRole("button", { name: "Продолжить в эфире", exact: true })

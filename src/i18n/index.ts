@@ -7,6 +7,8 @@ import type {
 } from "../types";
 export const words = {
   ru: {
+    solarSystem: "Солнечная система",
+    scienceLab: "Наука NASA",
     hub: "Центр миссий",
     brief: "Контракт",
     builder: "Конструктор",
@@ -35,7 +37,7 @@ export const words = {
     data: "Данные",
     budget: "Бюджет",
     science: "Наука",
-    risk: "Надёжность",
+    risk: "Индекс устойчивости",
     ok: "В норме",
     warning: "Внимание",
     blocked: "Нарушение",
@@ -69,7 +71,8 @@ export const words = {
     importOk: "Сохранение загружено",
     learning: "Обучение",
     engineer: "Инженер",
-    assumption: "Учебная модель · игровые характеристики, не данные NASA",
+    assumption:
+      "Учебная модель · характеристики условны; архивные данные NASA в разделе Наука",
     locked:
       "Проект зафиксирован после запуска. Перезапустите миссию для изменений.",
     restart: "Вернуться к проектированию",
@@ -115,6 +118,8 @@ export const words = {
     reserve: "Резерв",
   },
   en: {
+    solarSystem: "Solar system",
+    scienceLab: "NASA science",
     hub: "Mission hub",
     brief: "Mission brief",
     builder: "Spacecraft builder",
@@ -143,7 +148,7 @@ export const words = {
     data: "Data",
     budget: "Budget",
     science: "Science",
-    risk: "Reliability",
+    risk: "Robustness index",
     ok: "Nominal",
     warning: "Warning",
     blocked: "Violation",
@@ -177,7 +182,8 @@ export const words = {
     importOk: "Save loaded",
     learning: "Learning",
     engineer: "Engineer",
-    assumption: "Educational model · game specifications, not NASA data",
+    assumption:
+      "Educational model · fictional hardware; archived NASA observations in Science",
     locked:
       "Configuration locked after launch. Restart the mission to make changes.",
     restart: "Back to design",
@@ -289,7 +295,7 @@ export const issueText: Record<IssueCode, Record<Language, string>> = {
     en: "Four orbits of measurements exceed onboard memory.",
   },
   risk: {
-    ru: "Расчётный коэффициент надёжности ниже 85%.",
-    en: "Calculated reliability coefficient is below 85%.",
+    ru: "Учебный индекс устойчивости ниже 0.85; это не вероятность отказа.",
+    en: "Educational robustness index is below 0.85; it is not a failure probability.",
   },
 };

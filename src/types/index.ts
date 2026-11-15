@@ -28,9 +28,18 @@ export interface ComponentDef {
   protection?: number;
 }
 export interface Build {
+  modelVersion?: 2;
+  advancedFlight?: true;
+  customOrbit?: {
+    periapsisKm: number;
+    apoapsisKm: number;
+    inclinationDeg: number;
+    betaDeg: number;
+  };
   moduleIds: string[];
   orbitId: string;
   launcherId: string;
+  launchSiteId?: string;
   propellantKg: number;
   testingBudgetMUsd: number;
   overheadMUsd?: number;
@@ -166,6 +175,14 @@ export interface Incident {
   causes: Diagnostic[];
 }
 export interface MissionRun {
+  solarEfficiency?: number;
+  scanPasses?: {
+    orbit: number;
+    progress: number;
+    fovDeg: number;
+    target: "pole" | "equator";
+  }[];
+  observedCellIds: number[];
   incident: Incident | null;
   operations: Operations;
   seed: number;
@@ -204,6 +221,8 @@ export type MissionCommand =
   | { type: "Resume" }
   | { type: "Restart" };
 export type Page =
+  | "solarSystem"
+  | "scienceLab"
   | "hub"
   | "brief"
   | "builder"

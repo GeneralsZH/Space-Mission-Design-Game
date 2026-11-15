@@ -44,9 +44,16 @@ export function Help() {
     },
     {
       name: { ru: "05 / Риск и повтор", en: "05 / Risk & replay" },
-      formula: "risk_flare = clamp(0.50 − shielding − testing)",
-      ru: "Seeded xorshift32 определяет исход рискованных решений. Защита и испытания уменьшают риск. Safe mode сохраняет аппарат ценой 8% наблюдений; при затмении снижение нагрузки выключает радар и сокращает программу на 3%. Одинаковые seed и команды дают одинаковый исход.",
-      en: "Seeded xorshift32 determines risky decision outcomes. Shielding and testing reduce risk. Flare safe mode costs 8% of science; eclipse load reduction disables radar and cuts the program by 3%. Identical seeds and commands produce identical outcomes.",
+      formula:
+        "New model: shielding index ≥ 0.35; E_extra [Wh] = P [W] × 40/60 [h]",
+      ru: "Новые миссии: порог индекса защиты 0.35 при вспышке, расход W × 40/60 h при дополнительной тени. Safe mode уменьшает игровой индекс науки на 8%; снижение нагрузки выключает радар и уменьшает индекс на 3%. Это учебные критерии, не вероятность отказа. Только архивные полёты сохраняют seeded xorshift32.",
+      en: "New missions use a 0.35 protection-index threshold during the flare and W × 40/60 h energy consumption during extended eclipse. Safe mode costs 8% of the game science index; reduced load disables radar and costs 3%. These are educational criteria, not failure probabilities. Only archived flights retain seeded xorshift32.",
+    },
+    {
+      name: { ru: "Лунная орбита / модель v2", en: "Lunar orbit / model v2" },
+      formula: "T = 2π√(a³/μ); v = √(μ(2/r − 1/a))",
+      ru: "μ = 4.90e12 m³/s², R = 1737.4 km. Двухтельная сферическая модель; высота определяет период, скорость и тень. β Солнца задан сценарием. Захват предполагает v∞ = 820 m/s; это не реальный расчёт перелёта. Орбитальное покрытие и архивная освещённость доступны в разделе Наука NASA.",
+      en: "μ = 4.90e12 m³/s², R = 1737.4 km. Spherical two-body model: altitude determines period, speed and shadow. Solar beta is assumed by the scenario. Capture assumes v-infinity 820 m/s; this is not a real transfer solution. Explore simulated access and archived illumination in NASA science.",
     },
   ];
   return (
@@ -61,8 +68,8 @@ export function Help() {
         <CircleAlert size={20} />
         <span>
           {l === "ru"
-            ? "Все численные характеристики учебные. Модель не рассчитывает реальную траекторию, полный тепловой режим или сертифицированную надёжность."
-            : "All numerical specifications are educational. The model does not calculate real trajectories, full thermal behavior or certified reliability."}
+            ? "Характеристики аппарата и сценарии учебные. Новая модель использует двухтельную динамику Луны. Архивная освещённость NASA приведена в разделе «Наука NASA». Нет расчёта полного теплового режима или сертифицированной надёжности."
+            : "Hardware specifications and scenarios are educational. The new model uses lunar two-body dynamics; archived NASA illumination is in NASA science. Full thermal behavior and certified reliability are not modeled."}
         </span>
       </div>
       <div className="help-grid">
@@ -97,8 +104,8 @@ export function Help() {
             </li>
             <li>
               {l === "ru"
-                ? "Испытания оплачиваются без возврата. Их вклад в надёжность учитывается только для испытанной конфигурации; изменение состава, топлива, орбиты или носителя делает результат устаревшим."
-                : "Tests are non-refundable. Reliability credit applies only to the tested configuration; changing modules, fuel, orbit or launcher makes results outdated."}
+                ? "Испытания оплачиваются без возврата. Их вклад в игровой индекс устойчивости учитывается только для испытанной конфигурации; изменение состава, топлива, орбиты или носителя делает результат устаревшим."
+                : "Tests are non-refundable. Game robustness credit applies only to the tested configuration; changing modules, fuel, orbit or launcher makes results outdated."}
             </li>
             <li>
               {l === "ru"

@@ -3,6 +3,7 @@ import { defaultSettings, useMissionStore } from "../store/useMissionStore";
 
 // Regression fixture imported through the same migration path as a real v1 save.
 export function loadLegacyFixture() {
+  localStorage.setItem("orbital-flight-view", "panel");
   useMissionStore.getState().importSave(
     JSON.stringify({
       schemaVersion: 1,

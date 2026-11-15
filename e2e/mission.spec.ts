@@ -58,6 +58,7 @@ test("complete the contract, preserve flight on reload, replay the report", asyn
     .click();
   await page.getByRole("button", { name: "К запуску", exact: true }).click();
   await page.getByRole("button", { name: "Запустить миссию" }).click();
+  await page.getByRole("button", { name: "Пошагово", exact: true }).click();
   await expect(page.getByText("LIFTOFF — LIM-01")).toBeVisible();
   await page.getByRole("button", { name: "Пропустить анимацию" }).click();
   await expect(
@@ -158,6 +159,7 @@ test("zero fuel launches normally, misses capture and only then reveals the caus
     page.getByRole("button", { name: "Запустить миссию" }),
   ).toBeEnabled();
   await page.getByRole("button", { name: "Запустить миссию" }).click();
+  await page.getByRole("button", { name: "Пошагово", exact: true }).click();
   await page.getByRole("button", { name: "Пропустить анимацию" }).click();
   await page.getByRole("button", { name: /Safe mode/ }).click();
   await page.getByRole("button", { name: "Следующий этап" }).click();
@@ -190,6 +192,7 @@ test("the SVG view shows the same breakup before releasing its causes", async ({
   await page.getByRole("button", { name: /Лёгкий · Swift/ }).click();
   await nav(page, "Подготовка запуска");
   await page.getByRole("button", { name: "Запустить миссию" }).click();
+  await page.getByRole("button", { name: "Пошагово", exact: true }).click();
   await page.getByRole("button", { name: "Пропустить анимацию" }).click();
   await expect(page.getByTestId("explosion-2d")).toBeVisible();
   await expect(
@@ -340,6 +343,7 @@ test("risky decisions without shielding produce an explained failed report", asy
   await nav(page, "Подготовка запуска");
   await page.getByLabel("Seed сценария").fill("1");
   await page.getByRole("button", { name: "Запустить миссию" }).click();
+  await page.getByRole("button", { name: "Пошагово", exact: true }).click();
   await page.getByRole("button", { name: "Пропустить анимацию" }).click();
   await page.getByRole("button", { name: /Продолжить наблюдения/ }).click();
   await page.getByRole("button", { name: "Следующий этап" }).click();

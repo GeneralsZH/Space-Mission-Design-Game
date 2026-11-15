@@ -1,9 +1,13 @@
 import { catalog } from "../data/missionConfig";
 import { useMissionStore } from "../store/useMissionStore";
-import type { Operations } from "../types";
+import type { MissionCommand, Operations } from "../types";
 import { Panel } from "./common";
 
-export default function OperationsPanel() {
+export default function OperationsPanel({
+  onCommand,
+}: {
+  onCommand?: (command: MissionCommand) => void;
+}) {
   const s = useMissionStore(),
     run = s.run,
     ops = run.operations;
@@ -11,7 +15,10 @@ export default function OperationsPanel() {
     ru = l === "ru";
   const locked = !!run.crisis || !!run.result || !!run.incident;
   const update = (change: Partial<Operations>) =>
-    s.command({ type: "SetOperations", operations: { ...ops, ...change } });
+    (onCommand ?? s.command)({
+      type: "SetOperations",
+      operations: { ...ops, ...change },
+    });
   return (
     <Panel className="operations-panel">
       <p className="eyebrow">SPACECRAFT UPLINK / COMMAND AUTHORITY</p>

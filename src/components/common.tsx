@@ -238,6 +238,7 @@ export function LaunchButton() {
       disabled={!ready && editing}
       onClick={() => {
         if (editing) {
+          s.configure({ playback: "live", motionPreference: "on" });
           if (s.run.phase === "draft") s.command({ type: "Validate" });
           s.command({ type: "Launch", seed: s.seed });
         }
