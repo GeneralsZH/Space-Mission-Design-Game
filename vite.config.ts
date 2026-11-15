@@ -2,9 +2,7 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-// In production (GitHub Pages), VITE_BASE is injected by the CI workflow as
-// "/Space-Mission-Design-Game/". Locally it stays "/" so `npm run dev` works
-// without any change.
+// Existing organization workflow supplies the GitHub Pages repository path.
 const base = process.env.VITE_BASE ?? "/";
 
 export default defineConfig({
@@ -15,11 +13,26 @@ export default defineConfig({
     {
       name: "mission-offline-cache",
       generateBundle(_options, bundle) {
+        const shellChunks = new Set<string>();
+        const includeStaticImports = (file: string) => {
+          const entry = bundle[file];
+          if (!entry || entry.type !== "chunk" || shellChunks.has(file)) return;
+          shellChunks.add(file);
+          entry.imports.forEach(includeStaticImports);
+        };
+        for (const [file, entry] of Object.entries(bundle))
+          if (entry.type === "chunk" && entry.isEntry)
+            includeStaticImports(file);
         const assets = [
           base,
           `${base}index.html`,
           `${base}favicon.svg`,
-          ...Object.keys(bundle).map((file) => `${base}${file}`),
+          // Include statically shared shell dependencies (e.g. JSX runtime),
+          // while leaving dynamic WebGL/chart imports to load on demand.
+          ...Array.from(shellChunks, (file) => `${base}${file}`),
+          ...Object.entries(bundle)
+            .filter(([file]) => file.endsWith(".css"))
+            .map(([file]) => `${base}${file}`),
         ];
         const version = assets
           .join("")
@@ -40,15 +53,15 @@ self.addEventListener('fetch',event=>{
   if(request.mode==='navigate'){
     event.respondWith(fetch(request,{cache:'no-store'}).then(response=>{
       if(!response.ok)throw new Error('Navigation unavailable');
-      return caches.open(CACHE).then(cache=>{cache.put('/index.html',response.clone()).catch(()=>{});return response;});
-    }).catch(()=>caches.open(CACHE).then(cache=>cache.match('/index.html')).then(cached=>cached||Response.error())));
+      return caches.open(CACHE).then(cache=>{cache.put('${base}index.html',response.clone()).catch(()=>{});return response;});
+    }).catch(()=>caches.open(CACHE).then(cache=>cache.match('${base}index.html')).then(cached=>cached||Response.error())));
     return;
   }
   event.respondWith(caches.open(CACHE).then(async cache=>{
     const current=await cache.match(request,{ignoreVary:true});if(current)return current;
     try{const response=await fetch(request),type=response.headers.get('content-type')||'';
       const valid=response.ok&&(!url.pathname.endsWith('.js')&&!url.pathname.endsWith('.css')||(url.pathname.endsWith('.css')?type.includes('text/css'):type.includes('javascript')||type.includes('ecmascript')));
-      if(valid && /\\/assets\\//.test(url.pathname))await cache.put(request,response.clone()).catch(()=>{});if(valid)return response;
+      if(valid && /\\/(assets|science)\\//.test(url.pathname))await cache.put(request,response.clone()).catch(()=>{});if(valid)return response;
     }catch{}
     return /\\/assets\\//.test(url.pathname)?await caches.match(request,{ignoreVary:true})||Response.error():Response.error();
   }));

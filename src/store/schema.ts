@@ -9,9 +9,25 @@ import {
 import { createRun, transition } from "../engine/simulation";
 import type { Build, MissionRun } from "../types";
 import { cash, legacyEconomy, syncBuild } from "../engine/economy";
+import { realVehicle } from "../data/realLaunches";
 
 export const buildSchema = z
   .object({
+    modelVersion: z.literal(2).optional(),
+    advancedFlight: z.literal(true).optional(),
+    customOrbit: z
+      .object({
+        periapsisKm: z.number().finite().min(20).max(3000),
+        apoapsisKm: z.number().finite().min(20).max(10000),
+        inclinationDeg: z.number().finite().min(0).max(180),
+        betaDeg: z.number().finite().min(-90).max(90),
+      })
+      .strict()
+      .refine(
+        (o) => o.apoapsisKm >= o.periapsisKm,
+        "Apoapsis must not be below periapsis",
+      )
+      .optional(),
     moduleIds: z
       .array(z.string().refine((id) => catalog.some((c) => c.id === id)))
       .max(catalog.length),
@@ -19,6 +35,7 @@ export const buildSchema = z
     launcherId: z
       .string()
       .refine((id) => id === "none" || launchers.some((l) => l.id === id)),
+    launchSiteId: z.string().min(1).optional(),
     propellantKg: z.number().finite().min(0).max(physics.maxPropellantKg),
     testingBudgetMUsd: z.number().finite().min(0).max(physics.maxTestingMUsd),
     overheadMUsd: z.number().finite().min(0).max(500).optional(),
@@ -26,6 +43,11 @@ export const buildSchema = z
   .strict()
   .refine(
     (build) =>
+      (!build.launchSiteId ||
+        !!realVehicle(build.launcherId)?.sites.includes(build.launchSiteId)) &&
+      (!build.advancedFlight || build.modelVersion === 2) &&
+      (!build.customOrbit ||
+        (build.modelVersion === 2 && build.advancedFlight === true)) &&
       new Set(build.moduleIds).size === build.moduleIds.length &&
       categories.every(
         (category) =>

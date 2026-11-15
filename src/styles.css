@@ -3540,3 +3540,106 @@ input[type="range"]::-webkit-slider-thumb {
     gap: 8px;
   }
 }
+/* Observed science data retain the mission console's existing palette. */
+.science-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+}
+.science-grid > div > .panel + .panel {
+  margin-top: 24px;
+}
+.science-map {
+  display: block;
+  width: 100%;
+  max-height: 570px;
+  margin: 16px auto;
+}
+.science-map rect[role="button"] {
+  cursor: pointer;
+}
+.science-map rect[role="button"]:focus {
+  stroke: #fff;
+  stroke-width: 0.3;
+  outline: none;
+}
+.science-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+.science-legend div {
+  height: 12px;
+  flex: 1;
+  background: linear-gradient(to right, hsl(200 55% 8%), hsl(200 55% 88%));
+}
+.science-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+}
+.science-checkbox input {
+  accent-color: #29d1df;
+  width: 18px;
+  height: 18px;
+}
+.science-table-wrap {
+  overflow-x: auto;
+  margin: 20px 0;
+}
+.science-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+.science-table th,
+.science-table td {
+  padding: 14px 10px;
+  text-align: left;
+  border-bottom: 1px solid #294053;
+  white-space: nowrap;
+}
+.science-table .selected-row {
+  background: #29d1df12;
+}
+details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 0;
+}
+@media (max-width: 900px) {
+  .science-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.animation-recovery {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px;
+  margin: 12px 0;
+  background: #17313d;
+  border: 1px solid #2b687a;
+  border-radius: 6px;
+}
+.flight-animation {
+  scroll-margin-top: 16px;
+}
+.flight-animation:focus {
+  outline: none;
+}
+/* Keep utility controls reachable as the desktop navigation grows. */
+@media (min-width: 761px) {
+  .sidebar {
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .sidebar > * {
+    flex-shrink: 0;
+  }
+}

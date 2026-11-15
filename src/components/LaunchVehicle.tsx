@@ -1,7 +1,7 @@
 import { useMemo, useRef } from "react";
 import type { ReactNode, RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
-import { AdditiveBlending, DoubleSide, Object3D } from "three";
+import { DoubleSide, Object3D } from "three";
 import type { Group, InstancedMesh } from "three";
 import type { Build } from "../types";
 import {
@@ -10,40 +10,11 @@ import {
   visualStageProgress,
 } from "../features/playback/missionPlayback";
 import type { PlaybackFrame } from "../features/playback/missionPlayback";
+import { EnginePlume } from "./RocketEffects";
+export { EnginePlume } from "./RocketEffects";
+import RealLaunchVehicle from "./RealLaunchVehicle";
+import { realVehicle } from "../data/realLaunches";
 
-export function EnginePlume({
-  radius = 0.3,
-  height = 2.2,
-}: {
-  radius?: number;
-  height?: number;
-}) {
-  return (
-    <group position={[0, -height / 2, 0]}>
-      <mesh rotation={[0, 0, Math.PI]}>
-        <coneGeometry args={[radius, height, 20, 1, true]} />
-        <meshBasicMaterial
-          color="#ff8c38"
-          transparent
-          opacity={0.65}
-          blending={AdditiveBlending}
-          depthWrite={false}
-          side={DoubleSide}
-        />
-      </mesh>
-      <mesh position={[0, height * 0.14, 0]} rotation={[0, 0, Math.PI]}>
-        <coneGeometry args={[radius * 0.55, height * 0.72, 16]} />
-        <meshBasicMaterial
-          color="#b9f2ff"
-          transparent
-          opacity={0.9}
-          blending={AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
-    </group>
-  );
-}
 function Booster({ x }: { x: number }) {
   return (
     <group position={[x, -0.3, 0]}>
@@ -159,11 +130,10 @@ function LaunchPad() {
   );
 }
 
-export default function LaunchVehicle({
+function LegacyLaunchVehicle({
   build,
   animate,
   clock,
-  motionEnabled = true,
   cinematic = false,
   payload,
   mission,
@@ -171,7 +141,6 @@ export default function LaunchVehicle({
   build: Build;
   animate: boolean;
   clock?: RefObject<PlaybackFrame>;
-  motionEnabled?: boolean;
   cinematic?: boolean;
   payload?: ReactNode;
   mission?: import("../types").MissionRun;
@@ -191,16 +160,8 @@ export default function LaunchVehicle({
   const height = light ? 3.2 : heavy ? 4 : 3.6;
   useFrame((state, delta) => {
     if (animate) elapsed.current += Math.min(delta, 0.1);
-    const time = clock
-      ? motionEnabled
-        ? clock.current.seconds
-        : 0
-      : elapsed.current;
-    const rawProgress = clock
-      ? motionEnabled
-        ? clock.current.progress
-        : 0
-      : Math.min(1, time / 8);
+    const time = clock ? clock.current.seconds : elapsed.current;
+    const rawProgress = clock ? clock.current.progress : Math.min(1, time / 8);
     const progress = mission?.incident
       ? mission.incident.triggerProgress
       : mission
@@ -401,5 +362,14 @@ export default function LaunchVehicle({
         />
       </instancedMesh>
     </group>
+  );
+}
+export default function LaunchVehicle(
+  props: Parameters<typeof LegacyLaunchVehicle>[0],
+) {
+  return realVehicle(props.build.launcherId) ? (
+    <RealLaunchVehicle key={props.build.launcherId} {...props} />
+  ) : (
+    <LegacyLaunchVehicle {...props} />
   );
 }

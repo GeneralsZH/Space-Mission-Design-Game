@@ -45,16 +45,21 @@ export default function IncidentEffect({
   run,
   clock,
   motionEnabled,
+  positionFor,
+  effectScale = 1,
 }: {
   run: MissionRun;
   clock: RefObject<PlaybackFrame>;
   motionEnabled: boolean;
+  positionFor?: (progress: number) => [number, number, number];
+  effectScale?: number;
 }) {
   const group = useRef<Group>(null),
     core = useRef<Sprite>(null),
     shock = useRef<Sprite>(null),
     debris = useRef<Group>(null),
     smoke = useRef<Group>(null);
+  const systemLoss = useRef<Group>(null);
   const textures = useMemo(
     () => ({ fire: cloudTexture(true), smoke: cloudTexture(false) }),
     [],
@@ -77,6 +82,20 @@ export default function IncidentEffect({
     [],
   );
   useFrame(() => {
+    if (systemLoss.current) {
+      const loss = !!run.incident && run.incident.kind !== "explosion";
+      systemLoss.current.visible = loss;
+      if (loss) {
+        const p = run.phase === "failed" ? 1 : clock.current.progress;
+        systemLoss.current.position.fromArray(
+          positionFor?.(p) ?? sampleMission(run, p).position,
+        );
+        systemLoss.current.rotation.set(p * 1.7, p * 2.2, p * 0.8);
+        systemLoss.current.scale.setScalar(
+          (run.build.modelVersion === 2 ? 0.13 : 0.55) * effectScale,
+        );
+      }
+    }
     if (!group.current) return;
     const active = !!run.incident && run.incident.kind === "explosion";
     group.current.visible = active;
@@ -87,7 +106,9 @@ export default function IncidentEffect({
         : motionEnabled
           ? Math.min(1, clock.current.progress)
           : 0.18;
-    group.current.position.fromArray(sampleMission(run, 0).position);
+    group.current.position.fromArray(
+      positionFor?.(0) ?? sampleMission(run, 0).position,
+    );
     if (core.current) {
       core.current.scale.setScalar(
         0.12 + Math.sin((Math.min(1, p * 1.8) * Math.PI) / 2) * 1.2,
@@ -122,56 +143,82 @@ export default function IncidentEffect({
     });
   });
   return (
-    <group ref={group} visible={false} name="flight-breakup-effect">
-      <sprite ref={core}>
-        <spriteMaterial
-          map={textures.fire}
-          transparent
-          blending={AdditiveBlending}
-          depthWrite={false}
-        />
-      </sprite>
-      <sprite ref={shock}>
-        <spriteMaterial
-          map={textures.fire}
-          color="#ff842b"
-          transparent
-          blending={AdditiveBlending}
-          depthWrite={false}
-        />
-      </sprite>
-      <group ref={smoke}>
-        {rays.slice(0, 16).map((_, i) => (
-          <sprite key={i}>
-            <spriteMaterial
-              map={textures.smoke}
-              color={i % 3 === 0 ? "#d2a582" : "#929ba9"}
-              transparent
-              depthWrite={false}
-            />
-          </sprite>
-        ))}
+    <>
+      <group
+        ref={group}
+        scale={effectScale}
+        visible={false}
+        name="flight-breakup-effect"
+      >
+        <sprite ref={core}>
+          <spriteMaterial
+            map={textures.fire}
+            transparent
+            blending={AdditiveBlending}
+            depthWrite={false}
+          />
+        </sprite>
+        <sprite ref={shock}>
+          <spriteMaterial
+            map={textures.fire}
+            color="#ff842b"
+            transparent
+            blending={AdditiveBlending}
+            depthWrite={false}
+          />
+        </sprite>
+        <group ref={smoke}>
+          {rays.slice(0, 16).map((_, i) => (
+            <sprite key={i}>
+              <spriteMaterial
+                map={textures.smoke}
+                color={i % 3 === 0 ? "#d2a582" : "#929ba9"}
+                transparent
+                depthWrite={false}
+              />
+            </sprite>
+          ))}
+        </group>
+        <group ref={debris}>
+          {rays.map((_, i) => (
+            <mesh key={i}>
+              <boxGeometry
+                args={[
+                  i % 4 === 0 ? 0.14 : 0.04,
+                  0.025,
+                  i % 4 === 0 ? 0.06 : 0.025,
+                ]}
+              />
+              <meshStandardMaterial
+                color={i % 3 === 0 ? "#d7dce0" : "#807b70"}
+                emissive="#ff5b16"
+                emissiveIntensity={i % 5 === 0 ? 1 : 0}
+                metalness={0.6}
+                roughness={0.6}
+              />
+            </mesh>
+          ))}
+        </group>
       </group>
-      <group ref={debris}>
-        {rays.map((_, i) => (
-          <mesh key={i}>
-            <boxGeometry
-              args={[
-                i % 4 === 0 ? 0.14 : 0.04,
-                0.025,
-                i % 4 === 0 ? 0.06 : 0.025,
-              ]}
-            />
-            <meshStandardMaterial
-              color={i % 3 === 0 ? "#d7dce0" : "#807b70"}
-              emissive="#ff5b16"
-              emissiveIntensity={i % 5 === 0 ? 1 : 0}
-              metalness={0.6}
-              roughness={0.6}
+      <group
+        ref={systemLoss}
+        visible={false}
+        name="lost-attitude-tracking-reticle"
+      >
+        {[0, Math.PI / 2].map((angle, i) => (
+          <mesh key={i} rotation={[angle, 0, 0]}>
+            <torusGeometry args={[1, 0.015, 4, 48, Math.PI * 1.65]} />
+            <meshBasicMaterial
+              color={
+                run.incident?.kind === "trajectory" ? "#f7bd58" : "#f57c71"
+              }
+              transparent
+              opacity={0.8}
+              depthWrite={false}
             />
           </mesh>
         ))}
       </group>
-    </group>
+    </>
   );
 }

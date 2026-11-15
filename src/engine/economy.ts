@@ -6,8 +6,11 @@ import {
 } from "../data/missionConfig";
 import type { Build, Economy, TestKind, TestRecord } from "../types";
 import { calculate } from "./calculations";
+import { launchSiteFor } from "../data/realLaunches";
 
 export const emptyBuild: Build = {
+  advancedFlight: true,
+  modelVersion: 2,
   moduleIds: [],
   orbitId: "low-polar",
   launcherId: "none",
@@ -33,6 +36,19 @@ export const fingerprint = (b: Build) =>
     b.orbitId,
     b.launcherId,
     b.propellantKg,
+    ...(b.modelVersion === 2 ? ["lunar-2026"] : []),
+    ...(b.advancedFlight ? ["flight-advanced-1"] : []),
+    ...(b.launchSiteId ? ["site", b.launchSiteId] : []),
+    ...(b.customOrbit
+      ? [
+          [
+            b.customOrbit.periapsisKm,
+            b.customOrbit.apoapsisKm,
+            b.customOrbit.inclinationDeg,
+            b.customOrbit.betaDeg,
+          ],
+        ]
+      : []),
   ]);
 export function spending(e: Economy): number {
   return (
@@ -52,6 +68,9 @@ export function syncBuild(b: Build, e: Economy): Build {
     launcherId: e.launcherId ?? "none",
     propellantKg: e.fuelKg,
   };
+  const site = launchSiteFor(next);
+  if (site) next.launchSiteId = site.id;
+  else delete next.launchSiteId;
   const current = e.tests.filter(
     (t) => t.passed && t.fingerprint === fingerprint(next),
   );

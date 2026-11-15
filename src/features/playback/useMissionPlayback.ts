@@ -4,7 +4,11 @@ import { useMissionStore } from "../../store/useMissionStore";
 import { playbackKey, stageDuration } from "./missionPlayback";
 import type { PlaybackFrame } from "./missionPlayback";
 
-export function useMissionPlayback(run: MissionRun, ready: boolean) {
+export function useMissionPlayback(
+  run: MissionRun,
+  ready: boolean,
+  motionEnabled = true,
+) {
   const playback = useMissionStore((s) => s.settings.playback);
   const speed = useMissionStore((s) => s.settings.playbackSpeed);
   const key = playbackKey(run);
@@ -18,7 +22,14 @@ export function useMissionPlayback(run: MissionRun, ready: boolean) {
     if (clock.current.key !== key)
       clock.current = { key, seconds: 0, progress: 0 };
     const duration = stageDuration(run);
-    if (!ready || run.paused || run.crisis || run.result || duration === 0)
+    if (
+      !ready ||
+      !motionEnabled ||
+      run.paused ||
+      run.crisis ||
+      run.result ||
+      duration === 0
+    )
       return;
     let request = 0;
     let previous: number | null = null;
@@ -66,7 +77,7 @@ export function useMissionPlayback(run: MissionRun, ready: boolean) {
       disposed = true;
       cancelAnimationFrame(request);
     };
-  }, [key, run, ready, playback, speed]);
+  }, [key, run, ready, motionEnabled, playback, speed]);
   return {
     clock,
     frame: frame.key === key ? frame : { key, seconds: 0, progress: 0 },

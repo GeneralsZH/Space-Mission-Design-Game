@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import {
   ArrowUpRight,
   BookOpen,
@@ -22,6 +22,9 @@ import Builder from "../pages/Builder";
 import { Brief, Hub, Orbit as OrbitPage, Validation } from "../pages/Planning";
 import { Control, Report } from "../pages/Flight";
 import { Help, Settings } from "../pages/Utilities";
+import { rememberAttempt } from "../features/reports";
+const Science = lazy(() => import("../pages/Science"));
+const SolarSystem = lazy(() => import("../pages/SolarSystem"));
 
 const navigation: { page: Page; icon: LucideIcon; number?: string }[] = [
   { page: "hub", icon: LayoutDashboard },
@@ -31,8 +34,12 @@ const navigation: { page: Page; icon: LucideIcon; number?: string }[] = [
   { page: "validation", icon: ClipboardCheck, number: "04" },
   { page: "control", icon: Radio, number: "05" },
   { page: "report", icon: ShieldCheck, number: "06" },
+  { page: "scienceLab", icon: Globe2, number: "07" },
+  { page: "solarSystem", icon: Orbit, number: "08" },
 ];
 const pages = {
+  solarSystem: SolarSystem,
+  scienceLab: Science,
   hub: Hub,
   brief: Brief,
   builder: Builder,
@@ -68,8 +75,11 @@ export default function App() {
   const Content = pages[s.page];
   const main = useRef<HTMLElement>(null);
   useEffect(() => {
+    rememberAttempt(s.run);
+  }, [s.run]);
+  useEffect(() => {
     document.documentElement.lang = l;
-    document.title = `${t(l, s.page)} · Space Mission Architect`;
+    document.title = `${t(l, s.page)} · Orbital Mission Lab`;
   }, [l, s.page]);
   useEffect(() => {
     main.current?.focus({ preventScroll: true });
@@ -101,9 +111,9 @@ export default function App() {
             <Orbit size={31} strokeWidth={1.4} />
           </span>
           <span>
-            SPACE MISSION
+            ORBITAL MISSION
             <small>
-              ARCHITECT<span className="accent"> /</span>
+              LAB<span className="accent"> /</span>
             </small>
           </span>
         </button>
@@ -208,7 +218,23 @@ export default function App() {
           </div>
         </header>
         <main id="main" tabIndex={-1} ref={main} className="page-content">
-          <Content key={s.page === "control" ? s.flightSession : s.page} />
+          {s.build.modelVersion !== 2 && (
+            <div className="notice">
+              <p>
+                {l === "ru"
+                  ? "Архивные правила: этот проект сохранён до обновления. Повтор сохраняет прежний исход; пересмотр включает новую модель и сохраняет покупки."
+                  : "Archived rules: this project predates the upgrade. Replay preserves its original outcome; revising enables the lunar model and retains purchases."}
+              </p>
+              <button className="button outlined" onClick={s.restart}>
+                {l === "ru"
+                  ? "Пересмотреть с новой моделью"
+                  : "Revise with lunar model"}
+              </button>
+            </div>
+          )}
+          <Suspense fallback={<p className="muted">Loading science lab…</p>}>
+            <Content key={s.page === "control" ? s.flightSession : s.page} />
+          </Suspense>
         </main>
         <footer className="app-footer">
           <span>{t(l, "assumption")}</span>

@@ -4,6 +4,7 @@ import {
   launchers,
   missionConfig as mission,
   orbits,
+  resolveOrbit,
   physics as p,
 } from "../data/missionConfig";
 import type { BalanceReport, Build, ComponentDef, Issue } from "../types";
@@ -56,7 +57,9 @@ export function calculate(build: Build): BalanceReport {
   )
     throw new Error("Invalid build inputs");
   const parts = selectedComponents(build);
-  const orbit = orbits.find((o) => o.id === build.orbitId);
+  const orbit = orbits.some((o) => o.id === build.orbitId)
+    ? resolveOrbit(build)
+    : undefined;
   const launcher = launchers.find((l) => l.id === build.launcherId);
   if (!orbit || (!launcher && build.launcherId !== "none"))
     throw new Error("Invalid mission profile");

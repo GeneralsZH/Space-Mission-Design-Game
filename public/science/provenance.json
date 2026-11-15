@@ -1,0 +1,29 @@
+{
+  "productId": "WAC_POLE_ILL_TWI_SOUTH_100M",
+  "datasetId": "LRO-L-LROC-5-RDR-V1.0",
+  "productVersion": "v1.3",
+  "sourceUrl": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/WAC_POLE/WAC_POLE_ILL_TWI_SOUTH/WAC_POLE_ILL_TWI_SOUTH_100M.IMG",
+  "sourceSha256": "dfecc026012fe24f67ca70ed21a09a1723ca0750bf3ec120f1a4ed2c4604717b",
+  "sourceDocumentation": "https://data.lroc.im-ldi.com/lroc/view_rdr/WAC_POLE_ILL_TWI_SOUTH",
+  "citation": "Speyerer, E. J. & Robinson, M. S. (2013), Icarus 222(1), 122-136. doi:10.1016/j.icarus.2012.10.010",
+  "units": "percent time-weighted illumination",
+  "period": "2010-02-15 to 2011-02-05",
+  "primaryObservations": 3807,
+  "gapFillObservations": 229,
+  "sourcePixelMetres": 100,
+  "sourceRows": 1214,
+  "sourceColumns": 1214,
+  "sourceImageOffsetBytes": 9712,
+  "projection": "South polar stereographic, spherical radius 1737.4 km, central longitude 0 E",
+  "sampleGridSize": 41,
+  "sampleSpacingMetres": 2960.9756097560976,
+  "sampling": "Nearest original pixel at each 41x41 grid-cell centre; valid points within 88-90 S. Values rounded to 0.0001 percentage point; no interpolation. Source row/column indices are zero-based.",
+  "limitations": "Historical annual illumination, not current sunlight, temperature or water-ice abundance. Near-zero artifacts and temporal gap filling are documented by LROC. Sparse samples do not resolve individual craters or permanently shadowed regions.",
+  "texture": {
+    "sourceUrl": "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_2k.jpg",
+    "sourcePage": "https://svs.gsfc.nasa.gov/4720/",
+    "credit": "NASA's Scientific Visualization Studio; LRO LROC / LOLA teams; Ernie Wright",
+    "usage": "2025 SVS 2048x1024 display map, sRGB. Aesthetic color adjustment and polar fill; not used for quantitative science.",
+    "sha256": "f7130a1822681fa7512d7dcfd40db8c10b9ba4f06777910348698260ed7a2170"
+  }
+}

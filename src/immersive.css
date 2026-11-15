@@ -1,0 +1,745 @@
+.immersive-flight {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  z-index: 1000;
+  overflow: hidden;
+  background: #071321;
+  color: #e1eff9;
+  outline: none;
+  isolation: isolate;
+}
+.immersive-flight:fullscreen {
+  width: 100vw;
+  height: 100dvh;
+}
+.immersive-flight .live-mission-view {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.immersive-flight .scene-stage.mission-stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+}
+.immersive-flight .scene-stage canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+.immersive-flight .mission-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+}
+.immersive-flight .mission-map svg {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+.immersive-header {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: calc(18px + env(safe-area-inset-top)) 24px 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(#06111f80, #06111f26, transparent);
+  pointer-events: none;
+}
+.immersive-header > * {
+  pointer-events: auto;
+}
+.immersive-header .eyebrow {
+  margin-bottom: 5px;
+  font-size: 9px;
+}
+.immersive-header h1 {
+  font-size: 24px;
+  line-height: 1.2;
+  margin: 0 0 4px;
+}
+.immersive-header .tiny {
+  color: #9ab0c3;
+}
+.immersive-header .button-row {
+  flex-wrap: nowrap;
+}
+.immersive-flight .scene-toolbar {
+  position: absolute;
+  z-index: 4;
+  top: 102px;
+  left: 24px;
+  right: 24px;
+  margin: 0;
+  pointer-events: none;
+}
+.immersive-flight .scene-toolbar > * {
+  pointer-events: auto;
+}
+.immersive-flight .scene-tool,
+.immersive-flight .outlined,
+.immersive-flight select {
+  background: rgb(9 26 43 / 38%);
+  border-color: rgb(170 218 245 / 25%);
+  backdrop-filter: blur(8px) saturate(125%);
+}
+.immersive-flight .scene-tool:hover,
+.immersive-flight .outlined:hover {
+  background: rgb(32 94 119 / 48%);
+}
+.immersive-flight .scene-mode {
+  background: rgb(8 24 38 / 34%);
+  backdrop-filter: blur(8px) saturate(125%);
+}
+.immersive-metrics {
+  position: absolute;
+  top: 158px;
+  left: 24px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(75px, 1fr));
+  gap: 1px;
+  border: 1px solid rgb(161 216 244 / 20%);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgb(8 26 40 / 36%);
+  backdrop-filter: blur(8px) saturate(125%);
+  pointer-events: none;
+}
+.immersive-metrics > div {
+  padding: 9px 14px;
+  background: rgb(218 245 255 / 3%);
+}
+.immersive-metrics small {
+  display: block;
+  color: #bfd0df;
+  font-size: 10px;
+  margin-bottom: 3px;
+}
+.immersive-metrics strong {
+  font: 12px var(--font-mono, monospace);
+  color: #dbf8fc;
+}
+.immersive-flight .mission-action {
+  position: absolute;
+  z-index: 3;
+  bottom: 156px;
+  left: 24px;
+  width: min(480px, 46vw);
+  margin: 0;
+  padding: 12px 16px;
+  border-color: #34566b88;
+  background: rgb(8 27 41 / 36%);
+  backdrop-filter: blur(8px) saturate(125%);
+  pointer-events: none;
+}
+.immersive-flight .mission-action strong {
+  font-size: 12px;
+}
+.immersive-flight .mission-action p {
+  font-size: 10px;
+}
+.immersive-flight .camera-controls {
+  position: absolute;
+  z-index: 3;
+  bottom: 108px;
+  left: 24px;
+  margin: 0;
+}
+.immersive-flight .mission-world-legend {
+  display: none;
+}
+.immersive-flight .mission-crisis-overlay {
+  z-index: 4;
+  top: 228px;
+  bottom: auto;
+  left: 24px;
+  right: auto;
+  width: min(460px, calc(100% - 48px));
+  border: 1px solid #b58d4355;
+  background: rgb(49 34 17 / 44%);
+  backdrop-filter: blur(8px) saturate(125%);
+}
+.immersive-flight .animation-recovery {
+  position: absolute;
+  z-index: 4;
+  top: 230px;
+  left: 24px;
+  right: auto;
+  width: min(460px, calc(100% - 48px));
+  margin: 0;
+}
+.immersive-flight .launch-caption,
+.immersive-flight .mission-scale-note,
+.immersive-flight [data-testid="orbital-state"] {
+  position: absolute;
+  left: 24px;
+  bottom: 83px;
+  margin: 0;
+  z-index: 2;
+  pointer-events: none;
+  font-size: 9px;
+}
+.immersive-flight .launch-caption {
+  bottom: 242px;
+  color: #5ff2fc;
+}
+.immersive-flight [data-testid="orbital-state"] {
+  bottom: 244px;
+}
+.immersive-drawer {
+  position: absolute;
+  z-index: 6;
+  top: 154px;
+  bottom: 116px;
+  right: 24px;
+  width: min(374px, calc(100% - 48px));
+  padding: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: linear-gradient(145deg, rgb(20 43 63 / 56%), rgb(7 21 36 / 50%));
+  backdrop-filter: blur(12px) saturate(130%);
+  border: 1px solid rgb(174 224 249 / 26%);
+  border-radius: 10px;
+  box-shadow:
+    0 18px 50px rgb(0 8 18 / 24%),
+    inset 0 1px 0 rgb(233 250 255 / 9%);
+  scrollbar-width: thin;
+}
+.immersive-drawer-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.immersive-drawer-heading h2 {
+  font-size: 16px;
+}
+.immersive-drawer .panel {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  margin: 0;
+}
+.immersive-drawer .decision-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.immersive-drawer .decision {
+  padding: 14px;
+  min-height: 0;
+  text-align: left;
+}
+.immersive-drawer .decision span {
+  font-size: 11px;
+}
+.immersive-drawer .decision strong {
+  font-size: 13px;
+}
+.immersive-drawer .crisis-panel > p {
+  font-size: 12px;
+  margin-bottom: 14px;
+}
+.immersive-drawer .operations-panel .operations-selects {
+  grid-template-columns: 1fr;
+}
+.immersive-drawer .operations-panel p.muted {
+  font-size: 12px;
+}
+.immersive-drawer .postflight-diagnostics {
+  margin-top: 20px;
+}
+.immersive-log {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.immersive-log li {
+  border-left: 2px solid #2c7e91;
+  padding: 0 0 15px 13px;
+  font-size: 12px;
+}
+.immersive-log li.error {
+  border-color: #ed7870;
+}
+.immersive-log small {
+  color: #68cbdd;
+}
+.immersive-log p {
+  margin: 5px 0 0;
+}
+.immersive-controls {
+  position: absolute;
+  z-index: 7;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 24px calc(16px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: linear-gradient(
+    transparent,
+    rgb(6 19 32 / 28%) 25%,
+    rgb(6 19 32 / 48%)
+  );
+}
+.immersive-transport,
+.immersive-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.immersive-transport .button,
+.immersive-tabs .button {
+  min-height: 42px;
+  padding: 10px 14px;
+  font-size: 12px;
+}
+.immersive-speed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: #9bb3c7;
+}
+.immersive-speed select {
+  min-height: 40px;
+  border: 1px solid #36566c;
+  color: #e0f0fc;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+.immersive-mode {
+  min-height: 40px;
+  padding: 8px 12px;
+}
+
+/* Glass surfaces tint the scene without fading text or hit targets. */
+.immersive-flight .button.primary {
+  background: rgb(32 209 229 / 22%);
+  border-color: rgb(103 236 247 / 48%);
+  color: #bffbff;
+  box-shadow: inset 0 1px 0 rgb(211 253 255 / 10%);
+}
+.immersive-flight .button.primary:hover:not(:disabled) {
+  background: rgb(39 219 235 / 35%);
+}
+.immersive-flight .scene-mode button[aria-pressed="true"] {
+  background: rgb(67 172 193 / 24%);
+}
+.immersive-flight .animation-recovery {
+  background: rgb(11 44 60 / 48%);
+  backdrop-filter: blur(10px);
+}
+.immersive-drawer .decision.safe {
+  background: rgb(47 160 168 / 12%);
+  border-color: rgb(115 211 215 / 35%);
+  color: #c3f8f6;
+}
+.immersive-drawer .decision.risky {
+  background: rgb(172 119 46 / 12%);
+  border-color: rgb(232 188 112 / 32%);
+  color: #f3d39d;
+}
+.immersive-drawer .decision.safe:hover:not(:disabled) {
+  background: rgb(47 160 168 / 25%);
+}
+.immersive-drawer .decision.risky:hover:not(:disabled) {
+  background: rgb(172 119 46 / 24%);
+}
+.immersive-drawer .decision span,
+.immersive-drawer .muted {
+  color: #c4d1dc;
+}
+.immersive-drawer,
+.immersive-metrics,
+.immersive-flight .mission-action,
+.immersive-header {
+  text-shadow: 0 1px 3px rgb(0 8 18 / 75%);
+}
+.immersive-flight select option {
+  background: #0b1c2b;
+  color: #edf8ff;
+}
+.immersive-flight button:focus-visible,
+.immersive-flight select:focus-visible {
+  outline: 2px solid #a2f8ff;
+  outline-offset: 3px;
+}
+@media (max-width: 800px) {
+  .immersive-header {
+    padding: calc(12px + env(safe-area-inset-top)) 12px 14px;
+    gap: 8px;
+  }
+  .immersive-header h1 {
+    font-size: 18px;
+  }
+  .immersive-header .button {
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+  .immersive-header .button-row {
+    gap: 6px;
+  }
+  .immersive-flight .scene-toolbar {
+    top: 96px;
+    left: 12px;
+    right: 12px;
+  }
+  .immersive-metrics {
+    left: 12px;
+    right: 12px;
+    top: 142px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .immersive-metrics > div {
+    padding: 8px;
+  }
+  .immersive-metrics strong {
+    font-size: 11px;
+  }
+  .immersive-flight .mission-crisis-overlay,
+  .immersive-flight .animation-recovery {
+    top: 207px;
+    left: 12px;
+    width: calc(100% - 24px);
+  }
+  .immersive-controls {
+    flex-direction: column;
+    padding: 12px 10px calc(12px + env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+  .immersive-transport,
+  .immersive-tabs {
+    width: 100%;
+    justify-content: center;
+    gap: 6px;
+  }
+  .immersive-transport .button,
+  .immersive-tabs .button {
+    min-height: 37px;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+  .immersive-transport .button span,
+  .immersive-speed > span {
+    display: none;
+  }
+  .immersive-transport > .button.primary {
+    flex: 1;
+    min-width: 0;
+    max-width: 200px;
+    white-space: normal;
+  }
+  .immersive-speed select {
+    min-height: 37px;
+  }
+  .immersive-mode {
+    min-height: 37px;
+    font-size: 11px;
+    padding: 8px;
+  }
+  .immersive-drawer {
+    top: auto;
+    bottom: 130px;
+    max-height: 30dvh;
+    right: 12px;
+    width: calc(100% - 24px);
+    padding: 14px;
+  }
+  .immersive-drawer-heading {
+    margin-bottom: 12px;
+  }
+  .immersive-drawer .decision {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 5px 8px;
+    padding: 10px;
+  }
+  .immersive-drawer .decision > svg {
+    grid-row: 1 / 3;
+  }
+  .immersive-drawer .decision > strong,
+  .immersive-drawer .decision > span {
+    grid-column: 2;
+  }
+  .immersive-drawer .decision > span {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+  .immersive-drawer .crisis-panel > p.muted {
+    display: none;
+  }
+  .immersive-drawer .crisis-panel > .eyebrow {
+    display: none;
+  }
+  .immersive-drawer .crisis-panel > h2 {
+    font-size: 17px;
+    margin-bottom: 8px;
+  }
+  .immersive-flight:not([data-panel="none"]) .mission-action,
+  .immersive-flight:not([data-panel="none"]) .camera-controls {
+    display: none;
+  }
+  .immersive-flight .mission-action {
+    bottom: 206px;
+    left: 12px;
+    width: calc(100% - 24px);
+    padding: 9px 12px;
+  }
+  .immersive-flight .camera-controls {
+    bottom: 163px;
+    left: 12px;
+  }
+  .immersive-flight .camera-controls > span {
+    display: none;
+  }
+  .immersive-flight .mission-scale-note {
+    bottom: 137px;
+    left: 12px;
+    font-size: 8px;
+  }
+  .immersive-flight .launch-caption,
+  .immersive-flight [data-testid="orbital-state"] {
+    bottom: 286px;
+    left: 12px;
+  }
+}
+@media (max-height: 540px) and (min-width: 801px) {
+  .immersive-header {
+    padding-top: 10px;
+  }
+  .immersive-flight .scene-toolbar {
+    top: 78px;
+  }
+  .immersive-metrics {
+    top: 124px;
+  }
+  .immersive-drawer {
+    top: 124px;
+    bottom: 92px;
+  }
+  .immersive-flight .mission-crisis-overlay {
+    top: 190px;
+  }
+}
+
+.event-timeline {
+  margin: 14px 0;
+  border: 1px solid #83cae330;
+  background: #0a223449;
+  padding: 10px 12px;
+  border-radius: 7px;
+  backdrop-filter: blur(8px);
+}
+.event-timeline-caption {
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: #adc6d4;
+  margin-bottom: 8px;
+}
+.event-timeline ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.event-timeline li {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.event-timeline li span {
+  color: #d8e7ed;
+  font-size: 10px;
+}
+.event-timeline li strong {
+  color: #8fe9ed;
+  font: 12px monospace;
+}
+.event-timeline li small {
+  font-size: 9px;
+  color: #a5bfce;
+}
+.immersive-flight .event-timeline {
+  position: absolute;
+  top: 225px;
+  left: 24px;
+  width: min(460px, calc(100% - 48px));
+  margin: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.event-timeline.fault {
+  border-color: #dc827b77;
+}
+.event-timeline.fault li strong,
+.flight-damage-status {
+  color: #f5b292;
+}
+.flight-damage-status {
+  font-size: 10px;
+  margin: 8px 0 0;
+}
+.orbit-designer {
+  margin-top: 24px;
+}
+.orbit-designer h2 {
+  margin-bottom: 12px;
+}
+.orbit-designer-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  border: 0;
+  padding: 18px 0;
+}
+.orbit-designer label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+.orbit-designer small {
+  color: #92acbf;
+  font-size: 10px;
+}
+.orbit-designer-preview {
+  margin-bottom: 18px;
+}
+@media (max-width: 800px) {
+  .immersive-flight .event-timeline {
+    top: 207px;
+    left: 12px;
+    width: calc(100% - 24px);
+  }
+  .immersive-flight:not([data-panel="none"]) .event-timeline {
+    display: none;
+  }
+  .event-timeline ol {
+    gap: 8px;
+  }
+}
+
+.survey-state-key {
+  display: block;
+  color: #83d9e5;
+  font-size: 8px;
+  font-weight: 400;
+  margin-top: 3px;
+}
+.camera-mode-label {
+  display: inline;
+}
+@media (max-width: 800px) {
+  .mission-camera-modes .camera-mode-label {
+    display: none;
+  }
+}
+.flight-system-map {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 220px;
+  padding: 10px;
+  color: #9ac6d7;
+  background: #071d2d72;
+  border: 1px solid #9acde638;
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+  text-align: left;
+  z-index: 3;
+}
+.flight-system-map svg {
+  width: 100%;
+  display: block;
+}
+.flight-system-caption {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font: 7px monospace;
+  letter-spacing: 1px;
+}
+.flight-system-caption > span:last-child {
+  margin-left: auto;
+  font-size: 13px;
+}
+.flight-system-foot {
+  font-size: 8px;
+  display: block;
+  color: #9ebdce;
+}
+.flight-panorama-note {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  color: #a9d2de;
+  font: 9px monospace;
+  pointer-events: none;
+  text-shadow: 0 1px 5px #000;
+}
+.immersive-flight .flight-system-map {
+  top: 155px;
+  right: 24px;
+  bottom: auto;
+  width: 240px;
+}
+.immersive-flight .flight-panorama-note {
+  bottom: 105px;
+  left: 24px;
+  right: 285px;
+}
+@media (max-width: 800px) {
+  .flight-system-map {
+    width: 145px;
+    padding: 7px;
+  }
+  .immersive-flight .flight-system-map {
+    top: auto;
+    bottom: 148px;
+    right: 12px;
+    width: 145px;
+  }
+  .immersive-flight:not([data-panel="none"]) .flight-system-map {
+    display: none;
+  }
+  .flight-system-caption {
+    font-size: 6px;
+    letter-spacing: 0;
+  }
+  .flight-system-foot {
+    font-size: 7px;
+  }
+  .immersive-flight .flight-panorama-note {
+    bottom: 115px;
+    left: 12px;
+    right: 12px;
+    font-size: 8px;
+  }
+}

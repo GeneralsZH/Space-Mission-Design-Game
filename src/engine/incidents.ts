@@ -1,6 +1,7 @@
-import { missionConfig, orbits, physics } from "../data/missionConfig";
+import { missionConfig, resolveOrbit, physics } from "../data/missionConfig";
 import { calculate, clamp, selectedComponents, sum } from "./calculations";
 import type { Build, Diagnostic, Incident, MissionRun } from "../types";
+import { advancedEnergy } from "./energy";
 
 // Purchase requirements only. Engineering limits are evaluated in flight.
 export const canLaunch = (b: Build) =>
@@ -23,8 +24,9 @@ const fact = (
   explanation: { ru: whyRu, en: whyEn },
 });
 export function powerCycle(run: MissionRun) {
+  if (run.build.advancedFlight) return advancedEnergy(run);
   const r = calculate(run.build),
-    orbit = orbits.find((o) => o.id === run.build.orbitId)!;
+    orbit = resolveOrbit(run.build);
   const off = sum(
     selectedComponents(run.build).filter(
       (c) =>
@@ -64,7 +66,7 @@ export function cruiseEnergy(run: MissionRun) {
     (parts.some((c) => c.category === "thermal")
       ? physics.protectedHeaterW
       : physics.unprotectedHeaterW);
-  const netW = r.sunPowerW - hotel;
+  const netW = r.sunPowerW * (run.solarEfficiency ?? 1) - hotel;
   return {
     netW,
     endCharge: clamp(
@@ -77,7 +79,7 @@ export function cruiseEnergy(run: MissionRun) {
 export function predictIncident(run: MissionRun): Incident | null {
   const r = calculate(run.build),
     parts = selectedComponents(run.build),
-    orbit = orbits.find((o) => o.id === run.build.orbitId)!;
+    orbit = resolveOrbit(run.build);
   const event = (
     kind: Incident["kind"],
     triggerProgress: number,
@@ -207,8 +209,12 @@ export function predictIncident(run: MissionRun): Incident | null {
             "battery",
             "Энергетический запас исчерпан",
             "Energy reserve exhausted",
-            `${Math.max(0, run.chargeWh + cycle.recharge).toFixed(1)} Wh`,
-            `≥ ${cycle.shadow.toFixed(1)} Wh`,
+            run.build.advancedFlight
+              ? "0 Wh"
+              : `${Math.max(0, run.chargeWh + cycle.recharge).toFixed(1)} Wh`,
+            run.build.advancedFlight
+              ? "min(Q) ≥ 0 Wh"
+              : `≥ ${cycle.shadow.toFixed(1)} Wh`,
             "Накопленной энергии не хватило на нагрузку витка. Солнечная выработка, батарея и включённые приборы учитываются вместе.",
             "Stored energy could not cover this orbit's load. Solar generation, battery and active instruments are evaluated together.",
           ),

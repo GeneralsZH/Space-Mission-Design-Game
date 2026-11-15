@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
+import type { Group } from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import type { ThreeEvent } from "@react-three/fiber";
 import { DoubleSide, Spherical, Vector2, Vector3 } from "three";
@@ -7,6 +8,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Build } from "../types";
 import type { CameraCommand } from "./SpacecraftView";
 import LaunchVehicle from "./LaunchVehicle";
+import Starfield from "./Starfield";
 
 type Position = [number, number, number];
 interface SceneProps {
@@ -118,7 +120,15 @@ function Module({
     </group>
   );
 }
-function SolarWing({ width, selected }: { width: number; selected: boolean }) {
+function SolarWing({
+  width,
+  selected,
+  damaged = false,
+}: {
+  width: number;
+  selected: boolean;
+  damaged?: boolean;
+}) {
   const grid = useMemo(() => {
     const lines: number[] = [];
     for (let i = 0; i <= 9; i++) {
@@ -144,16 +154,20 @@ function SolarWing({ width, selected }: { width: number; selected: boolean }) {
       <mesh position={[0, 0, 0.036]}>
         <boxGeometry args={[width, 1.48, 0.035]} />
         <meshStandardMaterial
-          color="#173e77"
+          color={damaged ? "#202530" : "#173e77"}
           metalness={0.6}
           roughness={0.32}
           emissive="#0b284c"
-          emissiveIntensity={0.25}
+          emissiveIntensity={damaged ? 0 : 0.25}
         />
       </mesh>
       <mesh position={[0, 0, -0.045]}>
         <boxGeometry args={[width, 1.48, 0.02]} />
-        <meshStandardMaterial color="#263b52" metalness={0.5} roughness={0.7} />
+        <meshStandardMaterial
+          color={damaged ? "#342725" : "#263b52"}
+          metalness={damaged ? 0.15 : 0.5}
+          roughness={0.7}
+        />
       </mesh>
       <lineSegments>
         <bufferGeometry>
@@ -165,6 +179,17 @@ function SolarWing({ width, selected }: { width: number; selected: boolean }) {
           opacity={0.7}
         />
       </lineSegments>
+      {damaged &&
+        [-0.4, 0, 0.4, -0.22, 0.22].map((y, i) => (
+          <mesh
+            key={i}
+            position={[0, y, i < 3 ? 0.067 : -0.067]}
+            rotation={[0, 0, 0.22 + i * 0.14]}
+          >
+            <boxGeometry args={[width * 0.8, 0.025, 0.008]} />
+            <meshBasicMaterial color="#e59a46" />
+          </mesh>
+        ))}
     </>
   );
 }
@@ -224,12 +249,40 @@ function Dish({
     </group>
   );
 }
+function WingHinge({
+  deployment,
+  side,
+  spread,
+  children,
+}: {
+  deployment?: RefObject<number>;
+  side: number;
+  spread: number;
+  children: ReactNode;
+}) {
+  const hinge = useRef<Group>(null);
+  useFrame(() => {
+    if (hinge.current && deployment)
+      hinge.current.rotation.y =
+        (side * (1 - deployment.current) * Math.PI) / 2;
+  });
+  return (
+    <group ref={hinge} position={[side * (0.94 + spread), 0, 0]}>
+      {children}
+    </group>
+  );
+}
 export function SpacecraftModel({
   build,
   exploded,
   selectedId,
   onSelect,
-}: Pick<SceneProps, "build" | "exploded" | "selectedId" | "onSelect">) {
+  solarDamaged = false,
+  panelDeployment,
+}: Pick<SceneProps, "build" | "exploded" | "selectedId" | "onSelect"> & {
+  solarDamaged?: boolean;
+  panelDeployment?: RefObject<number>;
+}) {
   const has = (id: string) => build.moduleIds.includes(id);
   const find = (prefix: string) =>
     build.moduleIds.find((id) => id.startsWith(prefix));
@@ -343,22 +396,36 @@ export function SpacecraftModel({
       )}
       {panel &&
         [-1, 1].map((side) => (
-          <Module
+          <WingHinge
             key={side}
-            id={panel}
-            position={[side * (0.94 + width / 2 + spread), 0.05, 0]}
-            rotation={[0, side * -0.06, 0]}
-            onSelect={onSelect}
+            deployment={panelDeployment}
+            side={side}
+            spread={spread}
           >
-            <mesh
-              position={[-side * (width / 2 + 0.2), 0, 0]}
-              rotation={[0, 0, Math.PI / 2]}
+            <Module
+              id={panel}
+              position={[(side * width) / 2, 0.05, 0]}
+              rotation={[
+                0,
+                side * -0.06,
+                solarDamaged && side === 1 ? -0.32 : 0,
+              ]}
+              onSelect={onSelect}
             >
-              <cylinderGeometry args={[0.035, 0.035, 0.48 + spread * 2, 8]} />
-              <meshStandardMaterial color="#bbc8d1" metalness={0.8} />
-            </mesh>
-            <SolarWing width={width} selected={selectedId === panel} />
-          </Module>
+              <mesh
+                position={[-side * (width / 2 + 0.2), 0, 0]}
+                rotation={[0, 0, Math.PI / 2]}
+              >
+                <cylinderGeometry args={[0.035, 0.035, 0.48 + spread * 2, 8]} />
+                <meshStandardMaterial color="#bbc8d1" metalness={0.8} />
+              </mesh>
+              <SolarWing
+                width={width}
+                selected={selectedId === panel}
+                damaged={solarDamaged}
+              />
+            </Module>
+          </WingHinge>
         ))}
       {(has("hga-compact") || has("hga-high")) && (
         <Module
@@ -568,33 +635,6 @@ export function SpacecraftModel({
         </mesh>
       )}
     </group>
-  );
-}
-export function Starfield() {
-  const positions = useMemo(
-    () =>
-      new Float32Array(
-        Array.from({ length: 180 }, (_, i) => {
-          const theta = i * 2.39996;
-          const y = Math.sin(i * 7.19) * 13;
-          return [Math.cos(theta) * 17, y, Math.sin(theta) * 17];
-        }).flat(),
-      ),
-    [],
-  );
-  return (
-    <points>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <pointsMaterial
-        color="#7cabc3"
-        size={0.025}
-        transparent
-        opacity={0.65}
-        sizeAttenuation
-      />
-    </points>
   );
 }
 export function ContextGuard({

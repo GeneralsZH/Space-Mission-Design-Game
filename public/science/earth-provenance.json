@@ -1,0 +1,13 @@
+{
+  "title": "NASA SVS Blue Marble display mosaic",
+  "sourcePage": "https://svs.gsfc.nasa.gov/2915/",
+  "sourceImage": "https://svs.gsfc.nasa.gov/vis/a000000/a002900/a002915/bluemarble-1024.png",
+  "localFile": "earth-blue-marble-1024.png",
+  "credit": "NASA/Goddard Space Flight Center Scientific Visualization Studio; Reto Stockli (NASA/GSFC), NASA Earth Observatory",
+  "dimensions": [1024, 512],
+  "sizeBytes": 444710,
+  "sha256": "d1d3cb36ae6ae452c43cdf7ae0ffc13a959e8a5a2358f58b05e5f623c15119f9",
+  "downloaded": "2026-11-15",
+  "processing": "Original published PNG, no resampling or color edits",
+  "use": "3D display only; historical multi-observation mosaic, not current weather or quantitative mission data"
+}

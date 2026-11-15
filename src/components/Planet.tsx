@@ -1,6 +1,18 @@
-import { useEffect, useMemo } from "react";
-import { CanvasTexture, SRGBColorSpace } from "three";
+import { useEffect, useMemo, useState } from "react";
+import { useRef } from "react";
+import type { RefObject } from "react";
+import { useFrame } from "@react-three/fiber";
+import type { Mesh } from "three";
+import {
+  CanvasTexture,
+  AdditiveBlending,
+  BackSide,
+  SRGBColorSpace,
+  TextureLoader,
+  type Texture,
+} from "three";
 import { flightVisuals } from "../features/playback/missionPlayback";
+import { publicAsset } from "../features/publicAsset";
 
 function planetTexture(moon: boolean) {
   const canvas = document.createElement("canvas");
@@ -146,12 +158,56 @@ function planetTexture(moon: boolean) {
   texture.colorSpace = SRGBColorSpace;
   return texture;
 }
-export default function Planet({ moon = false }: { moon?: boolean }) {
+export default function Planet({
+  moon = false,
+  spin,
+}: {
+  moon?: boolean;
+  spin?: RefObject<number>;
+}) {
+  const surface = useRef<Mesh>(null);
+  const [observedTexture, setObservedTexture] = useState<Texture | null>(null);
+  useFrame((state) => {
+    if (spin && surface.current)
+      surface.current.rotation.y = (moon ? -0.4 : 0.8) + spin.current;
+    if (!moon)
+      state.gl.domElement.dataset.earthTexture = observedTexture
+        ? "nasa-blue-marble"
+        : "procedural-fallback";
+  });
   const texture = useMemo(() => planetTexture(moon), [moon]);
+  useEffect(() => {
+    let active = true;
+    const loaded = new TextureLoader().load(
+      publicAsset(
+        moon
+          ? "/science/moon-lroc-2025-2k.jpg"
+          : "/science/earth-blue-marble-1024.png",
+      ),
+      (map) => {
+        map.colorSpace = SRGBColorSpace;
+        if (active) setObservedTexture(map);
+      },
+      undefined,
+      () => {},
+    );
+    return () => {
+      active = false;
+      loaded.dispose();
+    };
+  }, [moon]);
   useEffect(() => () => texture.dispose(), [texture]);
   return (
-    <group position={moon ? flightVisuals.moon : flightVisuals.earth}>
-      <mesh rotation={[0, moon ? -0.4 : 0.8, 0]}>
+    <group
+      name={moon ? "mission-moon" : "mission-earth"}
+      position={moon ? flightVisuals.moon : flightVisuals.earth}
+    >
+      <mesh
+        ref={surface}
+        rotation={[0, moon ? -0.4 : 0.8, 0]}
+        castShadow={moon}
+        receiveShadow={moon}
+      >
         <sphereGeometry
           args={[
             moon ? flightVisuals.moonRadius : flightVisuals.earthRadius,
@@ -160,7 +216,7 @@ export default function Planet({ moon = false }: { moon?: boolean }) {
           ]}
         />
         <meshStandardMaterial
-          map={texture}
+          map={observedTexture ?? texture}
           roughness={moon ? 1 : 0.76}
           metalness={0}
           emissive={moon ? "#0d1014" : "#071c30"}
@@ -170,11 +226,20 @@ export default function Planet({ moon = false }: { moon?: boolean }) {
       {!moon && (
         <mesh>
           <sphereGeometry args={[flightVisuals.earthRadius * 1.025, 48, 32]} />
-          <meshBasicMaterial
-            color="#63cfff"
+          <shaderMaterial
             transparent
-            opacity={0.06}
             depthWrite={false}
+            side={BackSide}
+            blending={AdditiveBlending}
+            vertexShader={`#include <common>
+#include <logdepthbuf_pars_vertex>
+varying vec3 vN; varying vec3 vP; void main(){vec4 p=modelViewMatrix*vec4(position,1.0);vN=normalize(normalMatrix*normal);vP=p.xyz;gl_Position=projectionMatrix*p;
+#include <logdepthbuf_vertex>
+}`}
+            fragmentShader={`#include <logdepthbuf_pars_fragment>
+varying vec3 vN; varying vec3 vP; void main(){float rim=pow(1.0-abs(dot(normalize(vN),normalize(-vP))),2.8);gl_FragColor=vec4(0.16,0.53,1.0,rim*0.38);
+#include <logdepthbuf_fragment>
+}`}
           />
         </mesh>
       )}

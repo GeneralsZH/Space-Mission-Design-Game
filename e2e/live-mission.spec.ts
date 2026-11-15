@@ -105,6 +105,9 @@ test("the whole mission plays live: ascent, separation, lunar transfer, science 
     .poll(async () => Number(await canvas.getAttribute("data-launch-progress")))
     .toBeGreaterThan(0.08);
   await page.getByRole("button", { name: "Пауза", exact: true }).click();
+  // React and the canvas commit pause on the next render; sample after that
+  // frame instead of racing the renderer on slower software WebGL machines.
+  await expect(canvas).toHaveAttribute("data-playback-paused", "true");
   const time = await canvas.getAttribute("data-launch-time");
   await page.getByRole("button", { name: "Весь маршрут", exact: true }).click();
   await expect(

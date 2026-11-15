@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -13,7 +14,10 @@ import {
   catalog,
   missionConfig as mission,
   orbits,
+  resolveOrbit,
 } from "../data/missionConfig";
+import { orbitElements, orbitalParameters } from "../engine/orbital";
+import { issueText } from "../i18n";
 import { calculate } from "../engine/calculations";
 import { phaseNames, t } from "../i18n";
 import { useMissionStore } from "../store/useMissionStore";
@@ -28,6 +32,9 @@ import {
 import { fmt } from "../components/format";
 import Moon from "../components/Moon";
 import { cash } from "../engine/economy";
+import OrbitDesigner from "../components/OrbitDesigner";
+import RealLaunchDesigner from "../components/RealLaunchDesigner";
+import { realVehicle, launchSiteFor } from "../data/realLaunches";
 
 export function Hub() {
   const s = useMissionStore();
@@ -66,7 +73,7 @@ export function Hub() {
               onClick={() => {
                 if (s.run.result) s.navigate("report");
                 else {
-                  s.configure({ playback: "live" });
+                  s.configure({ playback: "live", motionPreference: "on" });
                   if (s.run.paused) s.command({ type: "Resume" });
                   s.navigate("control");
                 }
@@ -326,74 +333,113 @@ export function Orbit() {
             01 / {l === "ru" ? "Профиль орбиты" : "Orbit profile"}
           </h2>
           <div className="option-stack">
-            {orbits.map((o) => (
-              <button
-                key={o.id}
-                disabled={locked}
-                className={`option-card ${s.build.orbitId === o.id ? "active" : ""}`}
-                onClick={() => s.edit({ ...s.build, orbitId: o.id })}
-              >
-                <div className="option-head">
-                  <h3>{o.name[l]}</h3>
-                  <span className="radio-dot">
-                    {s.build.orbitId === o.id && <Check size={12} />}
-                  </span>
-                </div>
-                <p>{o.description[l]}</p>
-                <div className="option-specs">
-                  <span>Δv {o.requiredDeltaV} m/s</span>
-                  <span>
-                    {l === "ru" ? "Тень" : "Eclipse"}{" "}
-                    {fmt(o.shadowHours * 60, 0)} min
-                  </span>
-                  <span>
-                    {l === "ru" ? "Связь" : "Contact"}{" "}
-                    {fmt(o.contactHours * 60)} min
-                  </span>
-                  <span>
-                    {t(l, "science")} ×{o.scienceFactor}
-                  </span>
-                </div>
-              </button>
-            ))}
+            {orbits
+              .map((original) =>
+                resolveOrbit({
+                  ...s.build,
+                  orbitId: original.id,
+                  customOrbit: undefined,
+                }),
+              )
+              .map((o) => (
+                <button
+                  key={o.id}
+                  disabled={locked}
+                  className={`option-card ${!s.build.customOrbit && s.build.orbitId === o.id ? "active" : ""}`}
+                  onClick={() => {
+                    const next = { ...s.build, orbitId: o.id };
+                    delete next.customOrbit;
+                    s.edit(next);
+                  }}
+                >
+                  <div className="option-head">
+                    <h3>{o.name[l]}</h3>
+                    <span className="radio-dot">
+                      {s.build.orbitId === o.id && <Check size={12} />}
+                    </span>
+                  </div>
+                  <p>{o.description[l]}</p>
+                  <div className="option-specs">
+                    <span>Δv {fmt(o.requiredDeltaV, 0)} m/s</span>
+                    {s.build.modelVersion === 2 && (
+                      <span>
+                        {orbitElements[o.id].periapsisKm}–
+                        {orbitElements[o.id].apoapsisKm} km ·{" "}
+                        {fmt(
+                          orbitalParameters(orbitElements[o.id]).periodSeconds /
+                            60,
+                          1,
+                        )}{" "}
+                        min
+                      </span>
+                    )}
+                    <span>
+                      {l === "ru" ? "Тень" : "Eclipse"}{" "}
+                      {fmt(o.shadowHours * 60, 0)} min
+                    </span>
+                    <span>
+                      {l === "ru" ? "Связь" : "Contact"}{" "}
+                      {fmt(o.contactHours * 60)} min
+                    </span>
+                    <span>
+                      {t(l, "science")} ×{o.scienceFactor}
+                    </span>
+                  </div>
+                </button>
+              ))}
           </div>
+          <OrbitDesigner
+            key={JSON.stringify([s.build.orbitId, s.build.customOrbit])}
+            build={s.build}
+            language={l}
+            onChange={s.edit}
+            disabled={locked}
+          />
           <h2 className="section-title mt-6">
             02 / {l === "ru" ? "Ракета-носитель" : "Launch vehicle"}
           </h2>
+          <RealLaunchDesigner locked={locked} />
+          <h3 className="section-title">
+            {l === "ru"
+              ? "Учебные носители прежних версий"
+              : "Previous educational launcher profiles"}
+          </h3>
           <div className="launcher-options">
-            {launchers.map((launcher) => (
-              <button
-                key={launcher.id}
-                disabled={
-                  locked ||
-                  (s.economy.launcherId !== launcher.id &&
-                    cash(s.economy) +
-                      (launchers.find((v) => v.id === s.economy.launcherId)
-                        ?.costMUsd ?? 0) <
-                      launcher.costMUsd)
-                }
-                className={`option-card launcher-card ${s.build.launcherId === launcher.id ? "active" : ""}`}
-                onClick={() =>
-                  s.reserveLauncher(
-                    s.economy.launcherId === launcher.id ? null : launcher.id,
-                  )
-                }
-              >
-                <Rocket size={25} />
-                <h3>{launcher.name[l]}</h3>
-                <strong>{launcher.payloadKg} kg</strong>
-                <p>{launcher.costMUsd} M$</p>
-                <span className="tag">
-                  {s.economy.launcherId === launcher.id
-                    ? l === "ru"
-                      ? "Оплачено · вернуть"
-                      : "Paid · refund"
-                    : l === "ru"
-                      ? "Купить запуск"
-                      : "Purchase launch"}
-                </span>
-              </button>
-            ))}
+            {launchers
+              .filter((v) => !realVehicle(v.id))
+              .map((launcher) => (
+                <button
+                  key={launcher.id}
+                  disabled={
+                    locked ||
+                    (s.economy.launcherId !== launcher.id &&
+                      cash(s.economy) +
+                        (launchers.find((v) => v.id === s.economy.launcherId)
+                          ?.costMUsd ?? 0) <
+                        launcher.costMUsd)
+                  }
+                  className={`option-card launcher-card ${s.build.launcherId === launcher.id ? "active" : ""}`}
+                  onClick={() =>
+                    s.reserveLauncher(
+                      s.economy.launcherId === launcher.id ? null : launcher.id,
+                    )
+                  }
+                >
+                  <Rocket size={25} />
+                  <h3>{launcher.name[l]}</h3>
+                  <strong>{launcher.payloadKg} kg</strong>
+                  <p>{launcher.costMUsd} M$</p>
+                  <span className="tag">
+                    {s.economy.launcherId === launcher.id
+                      ? l === "ru"
+                        ? "Оплачено · вернуть"
+                        : "Paid · refund"
+                      : l === "ru"
+                        ? "Купить запуск"
+                        : "Purchase launch"}
+                  </span>
+                </button>
+              ))}
           </div>
           <p className="muted mt-4">
             {l === "ru"
@@ -407,6 +453,12 @@ export function Orbit() {
             <span className="tag">LUNA</span>
           </div>
           <Moon />
+          {launchSiteFor(s.build) && (
+            <Row
+              label={l === "ru" ? "Площадка" : "Launch pad"}
+              value={launchSiteFor(s.build)!.name[l]}
+            />
+          )}
           <Row label={t(l, "wetMass")} value={`${fmt(r.wetMassKg)} kg`} />
           <Row label={t(l, "payload")} value={`${fmt(r.payloadKg)} kg`} />
           <Bar
@@ -417,7 +469,10 @@ export function Orbit() {
             label={t(l, "availableDv")}
             value={`${fmt(r.availableDeltaV, 0)} m/s`}
           />
-          <Row label={t(l, "requiredDv")} value={`${r.requiredDeltaV} m/s`} />
+          <Row
+            label={t(l, "requiredDv")}
+            value={`${fmt(r.requiredDeltaV, 0)} m/s`}
+          />
           <button
             className="button primary full"
             onClick={() => s.navigate("validation")}
@@ -438,6 +493,7 @@ export function Orbit() {
 }
 
 export function Validation() {
+  const [reviewOpen, setReviewOpen] = useState(false);
   const s = useMissionStore(),
     l = s.settings.language,
     ru = l === "ru";
@@ -454,6 +510,61 @@ export function Validation() {
             : "You authorize the launch. The configuration locks at ignition."
         }
       />
+      <Panel>
+        <details onToggle={(e) => setReviewOpen(e.currentTarget.open)}>
+          <summary>
+            {ru
+              ? "Проверить инженерные ограничения"
+              : "Review engineering constraints"}
+          </summary>
+          {reviewOpen && (
+            <>
+              <p className="muted">
+                {ru
+                  ? "Расчётный анализ учебной модели; окончательное решение о старте принимаете вы."
+                  : "Calculated checks for this educational model; you still authorize launch."}
+              </p>
+              <Row
+                label="Dry / wet mass"
+                value={`${fmt(r.dryMassKg)} / ${fmt(r.wetMassKg)} kg`}
+              />
+              <Row
+                label="Available / required Δv"
+                value={`${fmt(r.availableDeltaV, 0)} / ${fmt(r.requiredDeltaV, 0)} m/s`}
+              />
+              <Row
+                label="Usable battery / eclipse need"
+                value={`${fmt(r.usableBatteryWh)} / ${fmt(r.shadowEnergyNeedWh)} Wh`}
+              />
+              <Row
+                label="Orbit energy balance"
+                value={`${fmt(r.cycleMarginWh)} Wh`}
+              />
+              {r.issues.length ? (
+                <ul>
+                  {r.issues.map((i) => (
+                    <li key={i.code}>{issueText[i.code][l]}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>
+                  {ru
+                    ? "Расчётные ограничения выполнены."
+                    : "Calculated constraints satisfied."}
+                </p>
+              )}
+              <button
+                className="button outlined"
+                onClick={() => s.navigate("scienceLab")}
+              >
+                {ru
+                  ? "Сравнить орбиты и данные NASA"
+                  : "Compare orbits & NASA data"}
+              </button>
+            </>
+          )}
+        </details>
+      </Panel>
       <div className="validation-grid">
         <Panel>
           <p className="eyebrow">FLIGHT CONFIGURATION</p>
@@ -469,7 +580,11 @@ export function Validation() {
           />
           <Row
             label={t(l, "orbit")}
-            value={orbits.find((o) => o.id === s.build.orbitId)!.name[l]}
+            value={
+              s.build.customOrbit
+                ? `${s.build.customOrbit.periapsisKm}–${s.build.customOrbit.apoapsisKm} km · ${s.build.customOrbit.inclinationDeg}°`
+                : orbits.find((o) => o.id === s.build.orbitId)!.name[l]
+            }
           />
           <Row label={t(l, "cost")} value={`${fmt(r.costMUsd, 2)} M$`} />
           <ul className="flight-manifest">
@@ -508,8 +623,8 @@ export function Validation() {
           />
           <p className="tiny muted mt-4">
             {ru
-              ? "Одинаковый seed и одинаковые команды воспроизводят тот же исход. После полёта будут доступны запись событий и разбор причин."
-              : "The same seed and commands reproduce the same outcome. Event recordings and cause analysis are available after the flight."}
+              ? "Новые миссии используют детерминированные расчётные исходы. Seed сохранён для совместимости старых полётов. После полёта доступен разбор причин."
+              : "New missions use deterministic engineering outcomes. Seed is retained for archived-flight compatibility. Cause analysis is available after the flight."}
           </p>
           {!s.build.moduleIds.length || s.build.launcherId === "none" ? (
             <p className="muted mt-4">

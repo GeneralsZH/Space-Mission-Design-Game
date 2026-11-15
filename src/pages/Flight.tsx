@@ -1,4 +1,11 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   ArrowRight,
   Check,
@@ -6,17 +13,10 @@ import {
   Flag,
   Pause,
   Play,
-  Radio,
   RotateCcw,
-  Shield,
 } from "lucide-react";
-import { missionConfig as mission, physics } from "../data/missionConfig";
-import {
-  calculate,
-  clamp,
-  selectedComponents,
-  sum,
-} from "../engine/calculations";
+import { missionConfig as mission } from "../data/missionConfig";
+import { calculate } from "../engine/calculations";
 import { phaseNames, t } from "../i18n";
 import { useMissionStore } from "../store/useMissionStore";
 import {
@@ -40,7 +40,11 @@ import {
   displayTelemetry,
   stageDuration,
 } from "../features/playback/missionPlayback";
-import type { MissionPhase } from "../types";
+import type { MissionCommand, MissionPhase } from "../types";
+import FlightDecisions from "../components/FlightDecisions";
+import ImmersiveFlight from "../components/ImmersiveFlight";
+import ScienceReport from "../components/ScienceReport";
+import EventTimeline from "../components/EventTimeline";
 const TelemetryChart = lazy(() => import("../components/TelemetryChart"));
 const flightPhases: MissionPhase[] = [
   "launched",
@@ -82,6 +86,33 @@ export function Control() {
   const l = s.settings.language;
   const run = s.run;
   const r = calculate(s.build);
+  const [immersive, setImmersive] = useState(() => {
+    try {
+      return localStorage.getItem("orbital-flight-view") !== "panel";
+    } catch {
+      return true;
+    }
+  });
+  const changeView = useCallback((value: boolean) => {
+    setImmersive(value);
+    try {
+      localStorage.setItem(
+        "orbital-flight-view",
+        value ? "immersive" : "panel",
+      );
+    } catch {
+      /* View still changes when storage is unavailable. */
+    }
+  }, []);
+  const closeImmersive = useCallback(() => changeView(false), [changeView]);
+  const animation = useRef<HTMLDivElement>(null);
+  const returnToAnimation = useRef(false);
+  const performAction = (command: MissionCommand) => {
+    returnToAnimation.current = true;
+    s.command(command);
+    if (useMissionStore.getState().run === run)
+      returnToAnimation.current = false;
+  };
   const [ready, setReady] = useState(false);
   const onReady = useCallback((value: boolean) => setReady(value), []);
   const [systemReducedMotion] = useState(
@@ -92,17 +123,33 @@ export function Control() {
     s.settings.motionPreference === "system"
       ? !s.settings.reducedMotion && !systemReducedMotion
       : s.settings.motionPreference === "on";
-  const { clock, frame } = useMissionPlayback(run, ready);
+  const { clock, frame } = useMissionPlayback(run, ready, motionEnabled);
+  const playAnimation = () => {
+    s.configure({ graphics: "3d", motionPreference: "on", playback: "live" });
+    if (run.result) s.replayFlight();
+    else if (run.paused) s.command({ type: "Resume" });
+  };
   const telemetry = displayTelemetry(
     run,
     s.settings.playback === "live" ? frame.progress : 0,
   );
   useEffect(() => {
-    if (run.result && !run.result.success)
+    if (!immersive && run.result && !run.result.success)
       document
         .getElementById("postflight-diagnostics")
         ?.scrollIntoView?.({ behavior: "instant", block: "start" });
-  }, [run.result]);
+  }, [run.result, immersive]);
+  useEffect(() => {
+    if (!returnToAnimation.current) return;
+    returnToAnimation.current = false;
+    // The explicit "show causes" action still opens its diagnostic report.
+    if (immersive || (run.result && !run.result.success)) return;
+    animation.current?.focus({ preventScroll: true });
+    animation.current?.scrollIntoView?.({
+      behavior: motionEnabled ? "smooth" : "instant",
+      block: "start",
+    });
+  }, [run, motionEnabled, immersive]);
   if (["draft", "validated"].includes(run.phase))
     return (
       <>
@@ -125,6 +172,20 @@ export function Control() {
         </Panel>
       </>
     );
+  if (immersive)
+    return (
+      <ImmersiveFlight
+        run={run}
+        clock={clock}
+        frame={frame}
+        telemetry={telemetry}
+        motionEnabled={motionEnabled}
+        onReady={onReady}
+        onPlay={playAnimation}
+        onCommand={performAction}
+        onClose={closeImmersive}
+      />
+    );
   const phaseIndex =
     run.phase === "failed" || run.phase === "incident"
       ? Math.max(
@@ -132,23 +193,6 @@ export function Control() {
           flightPhases.indexOf(run.incident?.sourcePhase ?? "completed"),
         )
       : flightPhases.indexOf(run.phase);
-  const parts = selectedComponents(run.build);
-  const flareRisk = clamp(
-    physics.flareBaseRisk -
-      sum(parts, (c) =>
-        ["radiation", "bus"].includes(c.category) ? (c.protection ?? 0) : 0,
-      ) -
-      run.build.testingBudgetMUsd * physics.testReliabilityPerM,
-  );
-  const eclipseRisk = clamp(
-    physics.eclipseBaseRisk -
-      sum(parts, (c) => (c.category === "thermal" ? (c.protection ?? 0) : 0)) -
-      clamp(
-        (run.chargeWh - r.shadowLoadW * physics.extendedShadowHours) /
-          Math.max(1, r.usableBatteryWh),
-      ) *
-        physics.eclipseReserveRiskReduction,
-  );
   return (
     <>
       <Heading
@@ -156,13 +200,20 @@ export function Control() {
         title={t(l, "control")}
         action={
           <div className="button-row">
+            <button
+              className="button outlined flight-fullscreen-button"
+              onClick={() => changeView(true)}
+            >
+              {l === "ru" ? "Полноэкранный полёт" : "Fullscreen flight"}
+            </button>
             <ReplayButton />
             {!run.result && (
               <button
                 className="button outlined"
-                onClick={() =>
-                  s.command({ type: run.paused ? "Resume" : "Pause" })
-                }
+                onClick={() => {
+                  if (run.paused) s.configure({ motionPreference: "on" });
+                  s.command({ type: run.paused ? "Resume" : "Pause" });
+                }}
               >
                 {run.paused ? <Play size={15} /> : <Pause size={15} />}{" "}
                 {t(l, run.paused ? "resume" : "pause")}
@@ -180,7 +231,7 @@ export function Control() {
           <button
             aria-pressed={s.settings.playback === "live"}
             onClick={() => {
-              s.configure({ playback: "live" });
+              s.configure({ playback: "live", motionPreference: "on" });
               if (run.paused) s.command({ type: "Resume" });
             }}
           >
@@ -256,14 +307,30 @@ export function Control() {
               </span>
               <span className="mono tiny">T+ {fmt(run.elapsedHours)} h</span>
             </div>
-            <MissionViewer
-              run={run}
-              language={l}
-              clock={clock}
-              frame={frame}
-              motionEnabled={motionEnabled}
-              onReady={onReady}
-            />
+            <div
+              ref={animation}
+              id="mission-animation"
+              className="flight-animation"
+              tabIndex={-1}
+              role="region"
+              aria-label={l === "ru" ? "Анимация полёта" : "Flight animation"}
+            >
+              <MissionViewer
+                run={run}
+                language={l}
+                clock={clock}
+                frame={frame}
+                motionEnabled={motionEnabled}
+                onReady={onReady}
+                onPlay={playAnimation}
+              />
+              <EventTimeline
+                run={run}
+                seconds={frame.seconds}
+                speed={s.settings.playbackSpeed}
+                language={l}
+              />
+            </div>
             {!run.result && (
               <div className="stage-playback-progress">
                 <div className="meter">
@@ -298,86 +365,8 @@ export function Control() {
             </div>
           </Panel>
           <PostFlightDiagnostics run={run} language={l} />
-          <OperationsPanel />
-          {run.crisis && (
-            <Panel className="crisis-panel">
-              <div id="mission-decision" />
-              <p className="eyebrow">
-                <CircleAlert size={15} />
-                {l === "ru" ? "ТРЕБУЕТСЯ РЕШЕНИЕ" : "DECISION REQUIRED"}
-              </p>
-              <h2>
-                {run.crisis === "flare"
-                  ? l === "ru"
-                    ? "Солнечная вспышка"
-                    : "Solar flare"
-                  : l === "ru"
-                    ? "Продлённое затмение"
-                    : "Extended eclipse"}
-              </h2>
-              <p className="muted">
-                {run.crisis === "flare"
-                  ? l === "ru"
-                    ? "Поток частиц угрожает электронике. Защита и испытания снижают риск; safe mode сокращает программу наблюдений."
-                    : "Particle flux threatens electronics. Shielding and testing reduce risk; safe mode shortens observations."
-                  : l === "ru"
-                    ? "Тень продлится ещё 40 минут. Сократите нагрузку или сохраните программу с риском просадки питания."
-                    : "Eclipse will last another 40 minutes. Reduce load or maintain the science program at the risk of a power sag."}
-              </p>
-              <div className="decision-options">
-                <button
-                  className="decision safe"
-                  disabled={run.paused}
-                  onClick={() =>
-                    s.command({ type: "ChooseDecision", choice: "safe" })
-                  }
-                >
-                  <Shield size={22} />
-                  <strong>
-                    {run.crisis === "flare"
-                      ? "Safe mode"
-                      : l === "ru"
-                        ? "Сократить нагрузку"
-                        : "Reduce load"}
-                  </strong>
-                  <span>
-                    {run.crisis === "flare"
-                      ? l === "ru"
-                        ? "−8% науки, +6 h. Электроника в безопасности."
-                        : "−8% science, +6 h. Electronics are protected."
-                      : l === "ru"
-                        ? "Радар отключён до конца миссии, −3% науки. Сохраняет заряд."
-                        : "Radar disabled for the mission, −3% science. Preserves charge."}
-                  </span>
-                </button>
-                <button
-                  className="decision risky"
-                  disabled={run.paused}
-                  onClick={() =>
-                    s.command({ type: "ChooseDecision", choice: "continue" })
-                  }
-                >
-                  <Radio size={22} />
-                  <strong>
-                    {l === "ru"
-                      ? "Продолжить наблюдения"
-                      : "Continue observations"}
-                  </strong>
-                  <span>
-                    {l === "ru" ? "Риск повреждения" : "Damage risk"}:{" "}
-                    {fmt(
-                      (run.crisis === "flare" ? flareRisk : eclipseRisk) * 100,
-                      0,
-                    )}
-                    %.{" "}
-                    {l === "ru"
-                      ? "Зависит от проекта и текущего заряда."
-                      : "Based on the design and current charge."}
-                  </span>
-                </button>
-              </div>
-            </Panel>
-          )}
+          <OperationsPanel onCommand={performAction} />
+          <FlightDecisions run={run} language={l} onCommand={performAction} />
           {run.telemetry.length > 0 && (
             <Panel>
               <h2>{t(l, "telemetry")}</h2>
@@ -431,7 +420,7 @@ export function Control() {
               <button
                 className="button primary full"
                 disabled={run.paused || !!run.crisis}
-                onClick={() => s.command({ type: "Advance" })}
+                onClick={() => performAction({ type: "Advance" })}
               >
                 <Play size={15} />
                 {run.phase === "scienceOperations" && run.orbit < mission.orbits
@@ -507,6 +496,7 @@ export function Report() {
         </div>
       </div>
       <PostFlightDiagnostics run={run} language={l} />
+      <ScienceReport />
       <div className="report-grid">
         <Panel>
           <h2>{l === "ru" ? "Контракт и результат" : "Contract & outcome"}</h2>
@@ -591,8 +581,8 @@ export function Report() {
           </ol>
           <p className="tiny muted">
             {l === "ru"
-              ? "Оценка: 65% наука + 20% надёжность с учётом состояния + 15% экономия. Оценка не заменяет выполнение контракта."
-              : "Score: 65% science + 20% reliability adjusted for health + 15% cost savings. Score does not replace contract success."}
+              ? "Оценка: 65% наука + 20% индекс устойчивости с учётом состояния + 15% экономия. Оценка не заменяет выполнение контракта."
+              : "Score: 65% science + 20% robustness index adjusted for health + 15% cost savings. Score does not replace contract success."}
           </p>
         </Panel>
       </div>
